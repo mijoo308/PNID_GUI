@@ -1,9 +1,9 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QApplication, QMainWindow, QAction, qApp, QToolBar,QLabel,QPushButton,QTextEdit,QLineEdit,QDialog, QFileDialog
+from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QIcon
 
-class MainWindow(QMainWindow):
 
+class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.initUI()
@@ -73,7 +73,7 @@ class MainWindow(QMainWindow):
         self.dialog.show()
 
     def dotBtnClick(self):
-        FileOpen = QFileDialog.getOpenFileName(self, '열기', './')
+        FileOpen = QFileDialog.getOpenFileName(self, '열기', './', filter='*.jpg, *.jpeg, *.png')
         self.dialog.source.setText(FileOpen[0])
         self.dialog.path.append(FileOpen[0])
 
