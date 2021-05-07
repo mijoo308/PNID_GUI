@@ -28,19 +28,39 @@ class MainWindow(QMainWindow):
         openImgFileAction.triggered.connect(self.fileOpen)
         folderAction = QAction(QIcon('./icon_img/folder.png'), 'folder', self)
         saveAction = QAction(QIcon('./icon_img/save.png'), 'save', self)
-
+        dotAction = QAction(QIcon('./icon_img/dotted.png'), ' ', self)
+        icon1Img = QAction(QIcon('./icon_img/icon1.png'), ' ', self)
+        preImgAction = QAction(QIcon('./Icon_img/pre.png'), '원본도면 전처리', self)
+        preImgAction.triggered.connect(self.addTool)
+        cogImgAction = QAction(QIcon('./Icon_img/cognition.png'), '도면 객체 인식', self)
 
         ''' tool bar '''
         self.file_toolbar = self.addToolBar('시작하기')
         self.file_toolbar.addAction(openImgFileAction)
         self.file_toolbar.addAction(folderAction)
         self.file_toolbar.addAction(saveAction)
+        self.file_toolbar.addAction(dotAction)
+        self.file_toolbar.addAction(icon1Img)
+        self.file_toolbar.addAction(preImgAction)
+        self.file_toolbar.addAction(cogImgAction)
 
         self.show()
 
+    def addTool(self):
+        dotAction = QAction(QIcon('./icon_img/dotted.png'), ' ', self)
+        outlineImgAction = QAction(QIcon('./Icon_img/outline.png'), '외곽선 영역 선택', self)
+        exceptImgAction = QAction(QIcon('./Icon_img/exceptField.png'), '표제영역 선택', self)
+        mapFieldImAction = QAction(QIcon('./Icon_img/mapField.png'), '도면영역 선택', self)
+
+        self.file_toolbar.addAction(dotAction)
+        self.file_toolbar.addAction(outlineImgAction)
+        self.file_toolbar.addAction(exceptImgAction)
+        self.file_toolbar.addAction(mapFieldImAction)
+
     def fileOpen(self):
-        '''Import file window'''
         self.dialog = QDialog()
+
+        '''Import file window'''
         self.dialog.setWindowTitle('이미지 도면 인식 시작 하기')
         self.dialog.setGeometry(300, 100, 600, 300)
 
@@ -67,8 +87,7 @@ class MainWindow(QMainWindow):
 
         '''Confirm button'''
         self.dialog.confirm = QPushButton('OK', self.dialog)
-        # self.dialog.confirm.resize(60, 40)
-        self.dialog.confirm.move(500, 250)
+        self.dialog.confirm.move(480, 250)
 
         self.dialog.show()
 
