@@ -49,13 +49,29 @@ class MainWindow(QMainWindow):
     def addTool(self):
         dotAction = QAction(QIcon('./icon_img/dotted.png'), ' ', self)
         outlineImgAction = QAction(QIcon('./Icon_img/outline.png'), '외곽선 영역 선택', self)
-        exceptImgAction = QAction(QIcon('./Icon_img/exceptField.png'), '표제영역 선택', self)
+        outlineImgAction.triggered.connect(self.outlineMessageBox)
+        exceptFieldImgAction = QAction(QIcon('./Icon_img/exceptField.png'), '표제영역 선택', self)
+        exceptFieldImgAction.triggered.connect(self.exceptFieldMessageBox)
         mapFieldImAction = QAction(QIcon('./Icon_img/mapField.png'), '도면영역 선택', self)
+        mapFieldImAction.triggered.connect(self.mapFieldMessageBox)
 
         self.file_toolbar.addAction(dotAction)
         self.file_toolbar.addAction(outlineImgAction)
-        self.file_toolbar.addAction(exceptImgAction)
+        self.file_toolbar.addAction(exceptFieldImgAction)
         self.file_toolbar.addAction(mapFieldImAction)
+
+    def outlineMessageBox(self):
+        msgBox = QMessageBox.information(self, 'Information', '알림\n\n최대한 테두리 안쪽 영역을 선택해주십시오.\n(우클릭으로 선택)',
+                                     QMessageBox.Ok, QMessageBox.Ok)
+
+    def exceptFieldMessageBox(self):
+        QMessageBox.information(self, "Information", '알림\n\n최대한 표제 영역만을 선택해주십시오.\n(우클릭으로 선택)',
+                                    QMessageBox.Ok, QMessageBox.Ok)
+
+    def mapFieldMessageBox(self):
+        QMessageBox.information(self, 'Information', '알림\n\n최대한 도면 영역만을 선택해주십시오.\n(우클릭으로 선택)',
+                                    QMessageBox.Ok, QMessageBox.Ok)
+        
 
     def fileOpen(self):
         self.dialog = QDialog()
