@@ -6,9 +6,9 @@ from PyQt5.QtGui import QIcon
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.initUI()
+        self.initMainUI()
 
-    def initUI(self):
+    def initMainUI(self):
         self.setWindowTitle('도면 인식 프로그램')
         self.move(300, 100)
         self.resize(1600, 800)
@@ -21,7 +21,6 @@ class MainWindow(QMainWindow):
         menubar.addMenu('&보기')
         menubar.addMenu('&도구')
         menubar.addMenu('&도움말')
-
 
         ''' Actions '''
         openImgFileAction = QAction(QIcon('./icon_img/file.png'), '시작하기', self)
@@ -43,6 +42,8 @@ class MainWindow(QMainWindow):
         self.file_toolbar.addAction(icon1Img)
         self.file_toolbar.addAction(preImgAction)
         self.file_toolbar.addAction(cogImgAction)
+
+        self.initBoxlayout()
 
         self.show()
 
@@ -111,6 +112,35 @@ class MainWindow(QMainWindow):
         FileOpen = QFileDialog.getOpenFileName(self, '열기', './', filter='*.jpg, *.jpeg, *.png')
         self.dialog.source.setText(FileOpen[0])
         self.dialog.path.append(FileOpen[0])
+
+    def initBoxlayout(self):
+
+        widget = QWidget()
+        # vbox = initImgList()
+        widget.setStyleSheet(
+                      "border-style: solid;"
+                      "border-width: 2px;"
+                      "border-color: blue;"
+                      "border-radius: 3px")
+
+
+        # QGridLayout 설정
+        boxlayout = QHBoxLayout(widget)
+
+        boxlayout.addLayout(self.initImgList(), 1)  # 레이아웃의 왼쪽
+
+        boxlayout.addWidget(QLabel('도면View 자리'),4)   # 레이아웃의 오른쪽
+
+        self.setCentralWidget(widget)
+
+    def initImgList(self):
+        label = QLabel('도면목록 자리')
+
+        vbox = QVBoxLayout()
+        # vbox.addStretch(1)
+
+        vbox.addWidget(label)
+        return vbox
 
 if __name__ == '__main__':
    app = QApplication(sys.argv)
