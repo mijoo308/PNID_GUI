@@ -81,6 +81,7 @@ class MainWindow(QMainWindow):
         '''Import file window'''
         self.dialog.setWindowTitle('이미지 도면 인식 시작 하기')
         self.dialog.setGeometry(300, 100, 600, 300)
+        self.dialog.setFixedSize(600, 300)
 
         self.dialog.label = QLabel('Source file', self.dialog)
         self.dialog.label.move(20, 10)
@@ -88,7 +89,7 @@ class MainWindow(QMainWindow):
         '''Dot Button'''
         self.dialog.dotBtn = QPushButton('...', self.dialog)
         self.dialog.dotBtn.resize(50, 30)
-        self.dialog.dotBtn.move(520, 5)
+        self.dialog.dotBtn.move(523, 5)
         self.dialog.dotBtn.clicked.connect(self.dotBtnClick)
 
         '''File Path'''
