@@ -1,8 +1,9 @@
 import sys
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import Qt
 
+from PIL import ImageQt
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -115,7 +116,7 @@ class MainWindow(QMainWindow):
         self.dialog.source.setText(FileOpen[0])
         self.dialog.path.append(FileOpen[0])
 
-    def initBoxlayout(self): # 다른 img 관련 widget으로 바꿔도 될 것 같음
+    def initBoxlayout(self):  # 다른 img 관련 widget으로 바꿔도 될 것 같음
         widget = QWidget()
         # vbox = initImgList()
         widget.setStyleSheet(  # 레이아웃 확인용
@@ -142,8 +143,31 @@ class MainWindow(QMainWindow):
         self.dockingWidget = QDockWidget("도면 목록")  # 타이틀 설정
         self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
 
-        self.dockingWidget.setWidget(dockWidgetContent)  # TODO: dockWidgetContent -> (img+label)BoxLayout List 로 바꿔야함
-        self.dockingWidget.setFloating(False) # ? False했는데도 움직여짐,,
+        ### 리팩토링 필요
+        pixmap = QPixmap('./icon_img/save.png')
+        pixmap = pixmap.scaled(300, 150)
+        label = QLabel()
+        label.setPixmap(pixmap)
+        label.setContentsMargins(10, 10, 10, 0)
+        label_text = QLabel("Test")
+        label.setAlignment(Qt.AlignTop)
+        label_text.setAlignment(Qt.AlignTop)
+        label_text.setAlignment(Qt.AlignCenter)
+
+        empty_widget_for_layout = QWidget()
+        box_layout = QVBoxLayout()
+        empty_widget_for_layout.setLayout(box_layout)
+        box_layout.addWidget(label)
+        box_layout.addWidget(label_text)
+        box_layout.addStretch()
+        empty_widget_for_layout.setStyleSheet(# 레이아웃 확인용
+            "border-style: solid;"
+            "border-width: 2px;"
+            "border-color: red;"
+            "border-radius: 3px")
+
+        self.dockingWidget.setWidget(empty_widget_for_layout)  # TODO: dockWidgetContent -> (img+label)BoxLayout List 로 바꿔야함
+        self.dockingWidget.setFloating(False)  # ? False했는데도 움직여짐,,
         self.dockingWidget.setMinimumSize(int(self.frameGeometry().width() * 0.2), self.frameGeometry().height())
         self.addDockWidget(Qt.LeftDockWidgetArea, self.dockingWidget)
 
