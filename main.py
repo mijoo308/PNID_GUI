@@ -20,7 +20,6 @@ class MainWindow(QMainWindow):
         self.createMenuBar()
         self.createToolBar()
 
-
         self.show()
 
 
@@ -58,6 +57,7 @@ class MainWindow(QMainWindow):
 
     def preprocessImg(self):
         self.enableToolBtn()
+        # preprocessImg
 
     def enableToolBtn(self):
         self.dotAction = QAction(QIcon('./icon_img/dotted.png'), ' ', self)
@@ -152,34 +152,55 @@ class MainWindow(QMainWindow):
 
         self.dockingWidget = QDockWidget("도면 목록")  # 타이틀 설정
         self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
-        self.dockingWidget.setWidget(self.imgListView()) #imgListView()랑 연결
-        self.dockingWidget.setFloating(False)  # ? False했는데도 움직여짐,,
         self.dockingWidget.setMinimumSize(int(self.frameGeometry().width() * 0.2), self.frameGeometry().height())
+        self.dockingWidget.setWidget(ImgListView()) #imgListView()랑 연결
+        self.dockingWidget.setFloating(False)  # ? False했는데도 움직여짐,,
+
         self.addDockWidget(Qt.LeftDockWidgetArea, self.dockingWidget)
 
-    def imgListView(self):
-        pixmap = QPixmap('./icon_img/save.png')
-        pixmap = pixmap.scaled(300, 150)
-        img_label = QLabel()
-        img_label.setPixmap(pixmap)
-        img_name_label = QLabel("Test")
-        # label.setAlignment(Qt.AlignTop)
-        # label_text.setAlignment(Qt.AlignTop)
-        img_name_label.setAlignment(Qt.AlignCenter)
+class ImgListView(QScrollArea):
+    def __init__(self):
+        super().__init__()
 
-        img_list_view = QWidget()
-        box_layout = QVBoxLayout()
-        img_list_view.setLayout(box_layout)
-        box_layout.addWidget(img_label)
-        box_layout.addWidget(img_name_label)
-        box_layout.addStretch()
-        img_list_view.setStyleSheet(# 레이아웃 확인용
+        self.setWidgetResizable(True)
+        self.resize(self.frameGeometry().width(), self.frameGeometry().height())
+
+        # empty widget for scrollArea
+        self.emptyWidget = QWidget()
+        self.setWidget(self.emptyWidget)
+
+        self.box_layout = QVBoxLayout()
+        self.setLayout(self.box_layout)
+        self.setStyleSheet(# 레이아웃 확인용
             "border-style: solid;"
             "border-width: 2px;"
             "border-color: red;"
             "border-radius: 3px")
 
-        return img_list_view
+        # for scroll test
+        self.makeImgListElement()
+        self.makeImgListElement()
+        self.makeImgListElement()
+        self.makeImgListElement()
+        self.makeImgListElement()
+        self.makeImgListElement()
+
+        self.emptyWidget.setLayout(self.box_layout)
+
+    def makeImgListElement(self):
+        pixmap = QPixmap('./icon_img/save.png')
+        pixmap = pixmap.scaled(270, 150)
+        img_label = QLabel()
+        img_label.setPixmap(pixmap)
+        img_name_label = QLabel("Test")
+        img_name_label.setAlignment(Qt.AlignCenter)
+
+        # layout에 추가
+        self.box_layout.addWidget(img_label)
+        self.box_layout.addWidget(img_name_label)
+
+        # TODO: element 마지막에 stretch 처리 필요
+        # self.box_layout.addStretch()
 
 
 if __name__ == '__main__':
