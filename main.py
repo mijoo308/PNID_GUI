@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtGui import QIcon, QPixmap, QCursor, QPainter
 from PyQt5.QtCore import Qt
 
 
@@ -19,6 +19,9 @@ class MainWindow(QMainWindow):
 
         self.createMenuBar()
         self.createToolBar()
+
+        self.createImgListDock() # Dock 없어도 될 것 같음
+        self.createImgViewer()
 
         self.show()
 
@@ -40,9 +43,6 @@ class MainWindow(QMainWindow):
         self.file_toolbar.addAction(self.icon1ImgAction)
         self.file_toolbar.addAction(self.preprocessImgAction)
         self.file_toolbar.addAction(self.recogImgAction)
-
-        self.initBoxlayout()
-        self.initImgListDock()
 
     def createActions(self):
         self.openImgFileAction = QAction(QIcon('./icon_img/file.png'), '시작하기')
@@ -126,30 +126,15 @@ class MainWindow(QMainWindow):
         self.dialog.source.setText(FileOpen[0])
         self.dialog.path.append(FileOpen[0])
 
-    def initBoxlayout(self):  # 다른 img 관련 widget으로 바꿔도 될 것 같음
-        widget = QWidget()
-        # vbox = initImgList()
-        widget.setStyleSheet(  # 레이아웃 확인용
-            "border-style: solid;"
-            "border-width: 2px;"
-            "border-color: blue;"
-            "border-radius: 3px")
+    def createImgViewer(self):
 
-        # Box Layout 설정
-        boxlayout = QHBoxLayout(widget)
+        ScrollableImgArea = ImgView()
+        self.setCentralWidget(ScrollableImgArea)
 
-        boxlayout.addWidget(QLabel('도면View 자리'))
+        # 이미지 띄우기
+        ScrollableImgArea.uploadImg(resize_ratio=0.2)
 
-        self.setCentralWidget(widget)
-
-    def initImgListDock(self):
-        dockWidgetContent = QWidget()
-        dockWidgetContent.setStyleSheet(  # 레이아웃 확인용
-            "border-style: solid;"
-            "border-width: 2px;"
-            "border-color: red;"
-            "border-radius: 3px")
-
+    def createImgListDock(self):
         self.dockingWidget = QDockWidget("도면 목록")  # 타이틀 설정
         self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
         self.dockingWidget.setMinimumSize(int(self.frameGeometry().width() * 0.2), self.frameGeometry().height())
@@ -188,7 +173,7 @@ class ImgListView(QScrollArea):
         self.emptyWidget.setLayout(self.box_layout)
 
     def makeImgListElement(self):
-        pixmap = QPixmap('./icon_img/save.png')
+        pixmap = QPixmap('test.jpg')
         pixmap = pixmap.scaled(270, 150)
         img_label = QLabel()
         img_label.setPixmap(pixmap)
@@ -201,6 +186,26 @@ class ImgListView(QScrollArea):
 
         # TODO: element 마지막에 stretch 처리 필요
         # self.box_layout.addStretch()
+
+
+class ImgView(QScrollArea):
+    def __init__(self):
+        super().__init__()
+
+        self.setWidgetResizable(True)
+
+        # empty widget for scrollArea
+        self.emptyWidget = QWidget()
+        self.setWidget(self.emptyWidget)
+
+    def uploadImg(self, resize_ratio):
+        pixmap = QPixmap('test.jpg')
+        size = pixmap.size()
+        pixmap = pixmap.scaled(int(size.width() * resize_ratio), int(size.height() * resize_ratio))
+        img_label = QLabel()
+        img_label.setPixmap(pixmap)
+        self.setWidget(img_label)
+
 
 
 if __name__ == '__main__':
