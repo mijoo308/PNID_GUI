@@ -21,7 +21,7 @@ class MainWindow(QMainWindow):
         self.createToolBar()
 
         #self.createImgListDock() # Dock 없어도 될 것 같음
-        #self.createImgViewer()
+        self.createImgViewer()
 
         self.show()
 
@@ -140,8 +140,8 @@ class MainWindow(QMainWindow):
         self.dialog.show()
 
     def btnClick(self):
-        imgView = ImgView()
-        imgView.uploadImg(resize_ratio=1, filePath=self.FileOpen[0])
+        # imgView = ImgView()
+        self.ScrollableImgArea.uploadImg(resize_ratio=1, filePath=self.FileOpen[0])
         self.dialog.close()
 
     def imgDotBtnClick(self):
@@ -155,12 +155,8 @@ class MainWindow(QMainWindow):
         self.dialog.path.append(FileOpen[0])
 
     def createImgViewer(self):
-
-        ScrollableImgArea = ImgView()
-        self.setCentralWidget(ScrollableImgArea)
-
-        # 이미지 띄우기
-        ScrollableImgArea.uploadImg(resize_ratio=0.2)
+        self.ScrollableImgArea = ImgView()
+        self.setCentralWidget(self.ScrollableImgArea)
 
     def createImgListDock(self):
         self.dockingWidget = QDockWidget("도면 목록")  # 타이틀 설정
