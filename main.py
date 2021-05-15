@@ -20,8 +20,8 @@ class MainWindow(QMainWindow):
         self.createMenuBar()
         self.createToolBar()
 
-        self.createImgListDock() # Dock 없어도 될 것 같음
-        self.createImgViewer()
+        #self.createImgListDock() # Dock 없어도 될 것 같음
+        #self.createImgViewer()
 
         self.show()
 
@@ -37,6 +37,7 @@ class MainWindow(QMainWindow):
     def createToolBar(self):
         self.file_toolbar = self.addToolBar('시작하기')
         self.file_toolbar.addAction(self.openImgFileAction)
+        self.file_toolbar.addAction(self.openXmlFileAction)
         self.file_toolbar.addAction(self.folderAction)
         self.file_toolbar.addAction(self.saveAction)
         self.file_toolbar.addAction(self.dotAction)
@@ -46,7 +47,9 @@ class MainWindow(QMainWindow):
 
     def createActions(self):
         self.openImgFileAction = QAction(QIcon('./icon_img/file.png'), '시작하기')
-        self.openImgFileAction.triggered.connect(self.openImgFileDialog)
+        self.openImgFileAction.triggered.connect(self.openFileDialog)
+        self.openXmlFileAction = QAction(QIcon('./icon_img/xml.png'), 'xml 파일')
+        self.openXmlFileAction.triggered.connect(self.openFileDialog)
         self.folderAction = QAction(QIcon('./icon_img/folder.png'), 'folder', self)
         self.saveAction = QAction(QIcon('./icon_img/save.png'), 'save', self)
         self.dotAction = QAction(QIcon('./icon_img/dotted.png'), ' ', self)
@@ -75,7 +78,7 @@ class MainWindow(QMainWindow):
 
 
     def outlineMessageBox(self):
-        msgBox = QMessageBox.information(self, 'Information', '알림\n\n최대한 테두리 안쪽 영역을 선택해주십시오.\n(우클릭으로 선택)',
+        QMessageBox.information(self, 'Information', '알림\n\n최대한 테두리 안쪽 영역을 선택해주십시오.\n(우클릭으로 선택)',
                                          QMessageBox.Ok, QMessageBox.Ok)
 
     def exceptFieldMessageBox(self):
@@ -86,7 +89,7 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self, 'Information', '알림\n\n최대한 도면 영역만을 선택해주십시오.\n(우클릭으로 선택)',
                                 QMessageBox.Ok, QMessageBox.Ok)
 
-    def openImgFileDialog(self):
+    def openFileDialog(self):
         self.dialog = QDialog()
 
         '''Import file window'''
@@ -94,36 +97,61 @@ class MainWindow(QMainWindow):
         self.dialog.setGeometry(300, 100, 600, 300)
         self.dialog.setFixedSize(600, 300)
 
-        self.dialog.label = QLabel('Source file', self.dialog)
-        self.dialog.label.move(20, 10)
+        self.dialog.imgLabel = QLabel('도면 입력', self.dialog)
+        self.dialog.imgLabel.move(20, 10)
+        self.dialog.xmlLabel = QLabel('XML 입력', self.dialog)
+        self.dialog.xmlLabel.move(20, 35)
 
         '''Dot Button'''
-        self.dialog.dotBtn = QPushButton('...', self.dialog)
-        self.dialog.dotBtn.resize(50, 30)
-        self.dialog.dotBtn.move(523, 5)
-        self.dialog.dotBtn.clicked.connect(self.dotBtnClick)
+        self.dialog.dotBtn1 = QPushButton('...', self.dialog)
+        self.dialog.dotBtn1.resize(50, 30)
+        self.dialog.dotBtn1.move(523, 5)
+        self.dialog.dotBtn1.clicked.connect(self.imgDotBtnClick)
+
+        self.dialog.dotBtn2 = QPushButton('...', self.dialog)
+        self.dialog.dotBtn2.resize(50, 30)
+        self.dialog.dotBtn2.move(523, 30)
+        self.dialog.dotBtn2.clicked.connect(self.xmlDotBtnClick)
 
         '''File Path'''
-        self.dialog.source = QLineEdit(self.dialog)
-        self.dialog.source.resize(300, 20)
-        self.dialog.source.move(225, 10)
-        self.dialog.source.setReadOnly(True)
-        self.dialog.source.setPlaceholderText('파일 경로')
+        self.dialog.imgSource = QLineEdit(self.dialog)
+        self.dialog.imgSource.resize(300, 20)
+        self.dialog.imgSource.move(225, 10)
+        self.dialog.imgSource.setReadOnly(True)
+        self.dialog.imgSource.setPlaceholderText('도면 파일 경로')
+
+        self.dialog.xmlSource = QLineEdit(self.dialog)
+        self.dialog.xmlSource.resize(300, 20)
+        self.dialog.xmlSource.move(225, 35)
+        self.dialog.xmlSource.setReadOnly(True)
+        self.dialog.xmlSource.setPlaceholderText('XML 파일 경로')
 
         self.dialog.path = QTextEdit(self.dialog)
-        self.dialog.path.resize(550, 200)
-        self.dialog.path.move(20, 40)
+        self.dialog.path.resize(550, 180)
+        self.dialog.path.move(20, 60)
         self.dialog.path.append('File Path')
 
         '''Confirm button'''
         self.dialog.confirm = QPushButton('OK', self.dialog)
         self.dialog.confirm.move(480, 250)
+        self.dialog.confirm.clicked.connect(self.btnClick)
+
 
         self.dialog.show()
 
-    def dotBtnClick(self):
-        FileOpen = QFileDialog.getOpenFileName(self, '열기', './', filter='*.jpg, *.jpeg, *.png')
-        self.dialog.source.setText(FileOpen[0])
+    def btnClick(self):
+        imgView = ImgView()
+        imgView.uploadImg(resize_ratio=1, filePath=self.FileOpen[0])
+        self.dialog.close()
+
+    def imgDotBtnClick(self):
+        self.FileOpen = QFileDialog.getOpenFileName(self, '열기', './', filter='*.jpg, *.jpeg, *.png')
+        self.dialog.imgSource.setText(self.FileOpen[0])
+        self.dialog.path.append(self.FileOpen[0])
+
+    def xmlDotBtnClick(self):
+        FileOpen = QFileDialog.getOpenFileName(self, '열기', './', filter='*.xml')
+        self.dialog.xmlSource.setText(FileOpen[0])
         self.dialog.path.append(FileOpen[0])
 
     def createImgViewer(self):
@@ -197,9 +225,10 @@ class ImgView(QScrollArea):
         # empty widget for scrollArea
         self.emptyWidget = QWidget()
         self.setWidget(self.emptyWidget)
+        #self.filePath = filePath
 
-    def uploadImg(self, resize_ratio):
-        pixmap = QPixmap('test.jpg')
+    def uploadImg(self, resize_ratio, filePath):
+        pixmap = QPixmap(filePath)
         size = pixmap.size()
         pixmap = pixmap.scaled(int(size.width() * resize_ratio), int(size.height() * resize_ratio))
         img_label = QLabel()
