@@ -136,13 +136,91 @@ class MainWindow(QMainWindow):
         self.dialog.confirm.move(480, 250)
         self.dialog.confirm.clicked.connect(self.btnClick)
 
-
         self.dialog.show()
 
     def btnClick(self):
         # imgView = ImgView()
         self.ScrollableImgArea.uploadImg(resize_ratio=1, filePath=self.FileOpen[0])
         self.dialog.close()
+        self.callMappedArea() #테스트 해보려구 넣은 명려문 나중에 다른 곳으로 옮겨야 함
+
+    def mappedAreaViewr(self):
+        mappedArea = ImgView()
+        #mappedArea.resize(800, 100) 사이즈 조절이 안됨,,,ㅠ
+        #ratio = mappedArea.width() * 0.8 안됨,,
+        mappedArea.uploadImg(resize_ratio=0.8, filePath=self.FileOpen[0])
+        self.mapDialog.mapWidget.dialogLayout.addWidget(mappedArea)
+
+    def callMappedArea(self):
+        #mapWindow(title=self.FileOpen[0]) 나중에 클래스로 옮겨서 깔끔하게 하고 싶움,,, 클래스로 뺏는데 안돼서,,, 주석 처리,,,
+        self.mapDialog = QMainWindow()
+
+        self.mapDialog.setWindowTitle(self.FileOpen[0])
+        self.mapDialog.move(100, 100)
+        self.mapDialog.resize(1100, 800)
+        self.dialogMenubar()
+
+        self.mapDialog.mapWidget = QWidget()
+        self.mapDialog.mapWidget.dialogLayout = QHBoxLayout()
+        self.mapDialog.mapWidget.setLayout(self.mapDialog.mapWidget.dialogLayout)
+
+        self.mapDialog.setCentralWidget(self.mappedAreaViewr())
+        self.mapDialog.setCentralWidget(self.tabView())
+
+        self.mapDialog.setCentralWidget(self.mapDialog.mapWidget)
+
+        self.mapDialog.show()
+
+    def tabView(self):
+        tabview = QWidget()
+
+        tabview.tabLayout = QVBoxLayout()
+        tabview.tabs = QTabWidget()
+
+        tabview.tab1 = QWidget()
+        tabview.tab1.layout = QHBoxLayout()
+        tabview.tab1.table = QTableWidget()
+        tabview.tab1.table.setRowCount(5)
+        tabview.tab1.table.setColumnCount(5)
+        tabview.tab1.table.setHorizontalHeaderLabels(["v", "id", "type", "class", "xml"])
+        tabview.tab1.layout.addWidget(tabview.tab1.table)
+        tabview.tab1.setLayout(tabview.tab1.layout)
+
+        tabview.checkBoxList = []
+        for i in range(5):
+            ckbox = QCheckBox()
+            tabview.checkBoxList.append(ckbox)
+
+        for i in range(5):
+            tabview.tab1.table.setCellWidget(i, 0, tabview.checkBoxList[i])
+
+        tabview.tab1.table.setColumnWidth(0, 15)
+
+        tabview.tab2 = QWidget()
+
+        #size 변경도 안되는 것 같아서 슬픔이 몰려와요...ㅠ
+        tabview.tabs.resize(int(self.mapDialog.width()*0.2), int(self.mapDialog.height()))
+
+        tabview.tabs.addTab(tabview.tab1, 'Labeled Objects')
+        tabview.tabs.addTab(tabview.tab2, 'Recognized Objects')
+
+        tabview.tabLayout.addWidget(tabview.tabs)
+        tabview.setLayout(tabview.tabLayout)
+
+        self.mapDialog.mapWidget.dialogLayout.addWidget(tabview)
+
+
+    def dialogMenubar(self):
+        dialogMenuBar = self.mapDialog.menuBar()
+        dialogMenuBar.setNativeMenuBar(False)
+        dialogMenuBar.addMenu('&File')
+        dialogMenuBar.addMenu('&Settings')
+        dialogMenuBar.addMenu('&Labeling')
+        dialogMenuBar.addMenu('&Recognition')
+        dialogMenuBar.addMenu('&Unit Function Test')
+        dialogMenuBar.addMenu('&Temporary Test')
+
+
 
     def imgDotBtnClick(self):
         self.FileOpen = QFileDialog.getOpenFileName(self, '열기', './', filter='*.jpg, *.jpeg, *.png')
@@ -230,6 +308,36 @@ class ImgView(QScrollArea):
         img_label = QLabel()
         img_label.setPixmap(pixmap)
         self.setWidget(img_label)
+
+'''class mapWindow(QMainWindow): 
+
+    def __init__(self, title):
+        super().__init__()
+        self.title = title
+        
+        self.initWindowUi(title=self.title)
+
+    def initWindowUi(self, title):
+        self.setWindowTitle(title)
+        self.resize(1200, 600)
+        self.createMenubar()
+
+        self.show()
+
+
+    def createMenubar(self):
+        menuBar = self.menuBar()
+        menuBar.setNativeMenuBar(False)
+        menuBar.addMenu('&File')
+        menuBar.addMenu('&Settings')
+        menuBar.addMenu('&Labeling')
+        menuBar.addMenu('&Recognition')
+        menuBar.addMenu('&Unit Function Test')
+        menuBar.addMenu('&Temporary Test')
+        
+    def mappedAreaViewr(self):
+        self.mappedArea = ImgView()
+        self.setCentralWidget(self.mappedArea)'''
 
 
 
