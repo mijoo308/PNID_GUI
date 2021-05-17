@@ -200,7 +200,7 @@ class ImgListView(QScrollArea):
         self.emptyWidget.setLayout(self.box_layout)
 
     def makeImgListElement(self):
-        pixmap = QPixmap('test.jpg')
+        pixmap = QPixmap('test.jpg') # test
         pixmap = pixmap.scaled(270, 150)
         img_label = QLabel()
         img_label.setPixmap(pixmap)
@@ -245,19 +245,20 @@ class mapWindow(QMainWindow):
     def initWindowUi(self, title):
         self.setWindowTitle(title)
         self.move(100, 100)
-        self.resize(1100, 800)
+        self.resize(1600, 800)
         self.createMenubar()
 
         self.mapWidget = QWidget()
         self.mapWidget.layout = QHBoxLayout()
         self.mapWidget.setLayout(self.mapWidget.layout)
 
-        self.setCentralWidget(self.mappedAreaViewr())
-        self.setCentralWidget(self.tabView())
+        self.mappedAreaViewr()
+        self.tabView()
 
         self.setCentralWidget(self.mapWidget)
 
         self.show()
+
 
     def createMenubar(self):
         menuBar = self.menuBar()
@@ -273,11 +274,15 @@ class mapWindow(QMainWindow):
         mappedArea = ImgView()
         #mappedArea.resize(800, 100) 사이즈 조절이 안됨,,,ㅠ
         #ratio = mappedArea.width() * 0.8 안됨,,
-        mappedArea.uploadImg(resize_ratio=0.8, filePath=self.title)
-        self.mapWidget.layout.addWidget(mappedArea)
+        mappedArea.uploadImg(resize_ratio=0.2, filePath=self.title)
+        self.mapWidget.layout.addWidget(mappedArea, stretch=3)
+
 
     def tabView(self):
         self.tabview = QWidget()
+
+        # self.scrollableTabArea = QScrollArea()
+        # self.scrollableTabArea.setWidget(self.tabview)
 
         self.tabview.tabLayout = QVBoxLayout()
         self.tabview.tabs = QTabWidget()
@@ -296,7 +301,10 @@ class mapWindow(QMainWindow):
         self.tabview.tabLayout.addWidget(self.tabview.tabs)
         self.tabview.setLayout(self.tabview.tabLayout)
 
-        self.mapWidget.layout.addWidget(self.tabview)
+        self.mapWidget.layout.addWidget(self.tabview, stretch=1)
+
+        # self.mapWidget.layout.addWidget(self.scrollableTabArea)
+
 
     def tab1UI(self):
 
