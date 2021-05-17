@@ -254,6 +254,7 @@ class mapWindow(QMainWindow):
 
         self.mappedAreaViewr()
         self.tabView()
+        self.createDock(self.tabview)
 
         self.setCentralWidget(self.mapWidget)
 
@@ -275,7 +276,17 @@ class mapWindow(QMainWindow):
         #mappedArea.resize(800, 100) 사이즈 조절이 안됨,,,ㅠ
         #ratio = mappedArea.width() * 0.8 안됨,,
         mappedArea.uploadImg(resize_ratio=0.2, filePath=self.title)
-        self.mapWidget.layout.addWidget(mappedArea, stretch=3)
+        self.mapWidget.layout.addWidget(mappedArea)
+
+
+    def createDock(self, connectedWidget):
+        self.dockingWidget = QDockWidget("XML Result")  # 타이틀 설정
+        self.setCorner(Qt.TopRightCorner, Qt.RightDockWidgetArea)
+        self.dockingWidget.setMinimumSize(int(self.frameGeometry().width() * 0.3), self.frameGeometry().height())
+        self.dockingWidget.setWidget(connectedWidget)
+        self.dockingWidget.setFloating(False)
+
+        self.addDockWidget(Qt.RightDockWidgetArea, self.dockingWidget)
 
 
     def tabView(self):
@@ -301,7 +312,8 @@ class mapWindow(QMainWindow):
         self.tabview.tabLayout.addWidget(self.tabview.tabs)
         self.tabview.setLayout(self.tabview.tabLayout)
 
-        self.mapWidget.layout.addWidget(self.tabview, stretch=1)
+        # self.mapWidget.layout.addWidget(self.tabview, stretch=1)
+
 
         # self.mapWidget.layout.addWidget(self.scrollableTabArea)
 
