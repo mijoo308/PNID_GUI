@@ -148,14 +148,15 @@ class MainWindow(QMainWindow):
         self.subwindow = mapWindow(title=self.FileOpen[0])
 
     def imgDotBtnClick(self):
-        self.FileOpen = QFileDialog.getOpenFileName(self, '열기', './', filter='*.jpg, *.jpeg, *.png')
+        self.FileOpen = QFileDialog.getOpenFileName(self, '열기', './', filter='*.jpg *.jpeg *.png')
         self.dialog.imgSource.setText(self.FileOpen[0])
         self.dialog.path.append(self.FileOpen[0])
 
+
     def xmlDotBtnClick(self):
-        FileOpen = QFileDialog.getOpenFileName(self, '열기', './', filter='*.xml')
-        self.dialog.xmlSource.setText(FileOpen[0])
-        self.dialog.path.append(FileOpen[0])
+        self.FileOpen = QFileDialog.getOpenFileName(self, '열기', './', filter='*.xml')
+        self.dialog.xmlSource.setText(self.FileOpen[0])
+        self.dialog.path.append(self.FileOpen[0])
 
     def createImgViewer(self):
         self.ScrollableImgArea = ImgView()
@@ -273,8 +274,6 @@ class mapWindow(QMainWindow):
 
     def mappedAreaViewr(self):
         mappedArea = ImgView()
-        #mappedArea.resize(800, 100) 사이즈 조절이 안됨,,,ㅠ
-        #ratio = mappedArea.width() * 0.8 안됨,,
         mappedArea.uploadImg(resize_ratio=0.2, filePath=self.title)
         self.mapWidget.layout.addWidget(mappedArea)
 
@@ -303,7 +302,6 @@ class mapWindow(QMainWindow):
 
         self.tabview.tab2 = QWidget()
 
-        # size 변경도 안되는 것 같아서 슬픔,,,
         self.tabview.tabs.resize(int(self.width() * 0.2), int(self.height()))
 
         self.tabview.tabs.addTab(self.tabview.tab1, 'Labeled Objects')
