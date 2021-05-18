@@ -2,6 +2,7 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QIcon, QPixmap, QCursor, QPainter
 from PyQt5.QtCore import Qt
+from utils import parseXML
 
 
 class MainWindow(QMainWindow):
@@ -140,23 +141,23 @@ class MainWindow(QMainWindow):
 
     def btnClick(self):
         # imgView = ImgView()
-        self.ScrollableImgArea.uploadImg(resize_ratio=1, filePath=self.FileOpen[0])
+        self.ScrollableImgArea.uploadImg(resize_ratio=1, filePath=self.imgFilePath[0])
         self.dialog.close()
         self.callMappedArea() #테스트 해보려구 넣은 명려문 나중에 다른 곳으로 옮겨야 함
 
     def callMappedArea(self):
-        self.subwindow = mapWindow(title=self.FileOpen[0])
+        self.subwindow = mapWindow(img=self.imgFilePath[0], xml=self.xmlFilePath[0])
 
     def imgDotBtnClick(self):
-        self.FileOpen = QFileDialog.getOpenFileName(self, '열기', './', filter='*.jpg *.jpeg *.png')
-        self.dialog.imgSource.setText(self.FileOpen[0])
-        self.dialog.path.append(self.FileOpen[0])
+        self.imgFilePath = QFileDialog.getOpenFileName(self, '열기', './', filter='*.jpg *.jpeg *.png')
+        self.dialog.imgSource.setText(self.imgFilePath[0])
+        self.dialog.path.append(self.imgFilePath[0])
 
 
     def xmlDotBtnClick(self):
-        self.FileOpen = QFileDialog.getOpenFileName(self, '열기', './', filter='*.xml')
-        self.dialog.xmlSource.setText(self.FileOpen[0])
-        self.dialog.path.append(self.FileOpen[0])
+        self.xmlFilePath = QFileDialog.getOpenFileName(self, '열기', './', filter='*.xml')
+        self.dialog.xmlSource.setText(self.xmlFilePath[0])
+        self.dialog.path.append(self.xmlFilePath[0])
 
     def createImgViewer(self):
         self.ScrollableImgArea = ImgView()
@@ -237,9 +238,12 @@ class ImgView(QScrollArea):
 
 
 class mapWindow(QMainWindow):
-    def __init__(self, title):
+    def __init__(self, img, xml):
         super().__init__()
-        self.title = title
+        self.title = img
+
+        self.IMG_PATH = img
+        self.XML_PATH = xml
         
         self.initWindowUi(title=self.title)
 
@@ -247,6 +251,7 @@ class mapWindow(QMainWindow):
         self.setWindowTitle(title)
         self.move(100, 100)
         self.resize(1600, 800)
+
         self.createMenubar()
 
         self.mapWidget = QWidget()
@@ -274,7 +279,7 @@ class mapWindow(QMainWindow):
 
     def mappedAreaViewr(self):
         mappedArea = ImgView()
-        mappedArea.uploadImg(resize_ratio=0.2, filePath=self.title)
+        mappedArea.uploadImg(resize_ratio=0.2, filePath=self.IMG_PATH)
         self.mapWidget.layout.addWidget(mappedArea)
 
 
@@ -298,7 +303,7 @@ class mapWindow(QMainWindow):
         self.tabview.tabs = QTabWidget()
 
         self.tabview.tab1 = QWidget()
-        self.tab1UI()
+        self.createTab1UI(self.XML_PATH)
 
         self.tabview.tab2 = QWidget()
 
@@ -310,31 +315,44 @@ class mapWindow(QMainWindow):
         self.tabview.tabLayout.addWidget(self.tabview.tabs)
         self.tabview.setLayout(self.tabview.tabLayout)
 
-        # self.mapWidget.layout.addWidget(self.tabview, stretch=1)
 
-
-        # self.mapWidget.layout.addWidget(self.scrollableTabArea)
-
-
-    def tab1UI(self):
+    def createTab1UI(self, xml_path):
 
         self.tabview.tab1.layout = QHBoxLayout()
+
+        '''XML Parsing'''
+        result = parseXML(xml_path, type='res')
+        table_size = len(result)
+
         '''Table'''
         self.tabview.tab1.table = QTableWidget()
-        self.tabview.tab1.table.setRowCount(5)
-        self.tabview.tab1.table.setColumnCount(5)
-        self.tabview.tab1.table.setHorizontalHeaderLabels(["v", "id", "type", "class", "xml"])
+        self.tabview.tab1.table.setRowCount(table_size)
+        self.tabview.tab1.table.setColumnCount(8)
+        self.tabview.tab1.table.setHorizontalHeaderLabels(["v", "type", "text", "xmin", "ymin", "xmax", "ymax", "orientation"])
         self.tabview.tab1.layout.addWidget(self.tabview.tab1.table)
         self.tabview.tab1.setLayout(self.tabview.tab1.layout)
+
         '''check box'''
         self.tabview.tab1.checkBoxList = []
-        for i in range(5):
+        for i in range(table_size):
             ckbox = QCheckBox()
             self.tabview.tab1.checkBoxList.append(ckbox)
-        for i in range(5):
+        for i in range(table_size):
             self.tabview.tab1.table.setCellWidget(i, 0, self.tabview.tab1.checkBoxList[i])
 
-        self.tabview.tab1.table.setColumnWidth(0, 15)
+            # result 순서 string, orientation, xmin, ymin, xmax, ymax
+            self.tabview.tab1.table.setItem(i, 2, QTableWidgetItem(result[i][0]))
+            self.tabview.tab1.table.setItem(i, 3, QTableWidgetItem(result[i][2]))
+            self.tabview.tab1.table.setItem(i, 4, QTableWidgetItem(result[i][3]))
+            self.tabview.tab1.table.setItem(i, 5, QTableWidgetItem(result[i][4]))
+            self.tabview.tab1.table.setItem(i, 6, QTableWidgetItem(result[i][5]))
+            self.tabview.tab1.table.setItem(i, 7, QTableWidgetItem(result[i][1]))
+
+        self.tabview.tab1.table.setColumnWidth(0, 5)
+
+    def updateTab1(self):
+        header = self.tabview.tab1.table.horizontalHeader()
+        header.setResizeMode(QHeaderView.ResizeToContents)
 
 
 if __name__ == '__main__':
