@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QIcon, QPixmap, QCursor, QPainter
+from PyQt5.QtGui import QIcon, QPixmap, QCursor, QPainter,QImage, QPalette
 from PyQt5.QtCore import Qt
 from utils import parseXML
 
@@ -229,12 +229,48 @@ class ImgView(QScrollArea):
         #self.filePath = filePath
 
     def uploadImg(self, resize_ratio, filePath):
-        pixmap = QPixmap(filePath)
-        size = pixmap.size()
-        pixmap = pixmap.scaled(int(size.width() * resize_ratio), int(size.height() * resize_ratio))
-        img_label = QLabel()
-        img_label.setPixmap(pixmap)
-        self.setWidget(img_label)
+        self.pixmap = QPixmap(filePath)
+        size = self.pixmap.size()
+        self.pixmap.scaled(int(size.width() * resize_ratio), int(size.height() * resize_ratio))
+        self.img_label = QLabel()
+        self.img_label.setPixmap(self.pixmap)
+        self.setWidget(self.img_label)
+
+    def layer(self):
+        '''self.img_label.forepalette = QPalette(self.img_lable.palette())
+        self.img_label.forepalette.setColor(self.img_label.forepalette.Background, Qt.black)
+        self.setPalette(self.img_label.forepalette)
+        self.setWidget(self.img_label)'''
+        self.layer = QImage(self.img_label.size(), QImage.Format_ARGB32)
+        self.layer.fill(Qt.black)
+
+    #def test(self):
+
+class LayerItem(QGraphicsRectItem):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.m_pixmap = QPixmap()
+
+    def reset(self, size):
+        self.m_pixmap = QPixmap(size)
+        self.m_pixmap.fill(Qt.black)
+
+class GraphicsView(QGraphicsView):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setScene(QGraphicsScene(self))
+
+        self.background_item = QGraphicsPixmapItem()
+        #self.foreground_item = LayerItem(self.background_item)
+        self.scene().addItem(self.background_item)
+        #self.scene().addItem(self.foreground_item)
+
+    def set_image(self, image):
+        self.background_item.setPixmap(image) #pixmap 넘겨줘야함
+        #self.foreground_item.reset(size=self.background_item.pixmap().size())
+        self.centerOn(self.background_item)
+
 
 
 class mapWindow(QMainWindow):
@@ -256,16 +292,17 @@ class mapWindow(QMainWindow):
 
         self.mapWidget = QWidget()
         self.mapWidget.layout = QHBoxLayout()
+        #self.mapWidget.viewLayout = QVBoxLayout()
         self.mapWidget.setLayout(self.mapWidget.layout)
-
         self.mappedAreaViewr()
+        self.mapWidget.mlayer = QImage(self.mappedArea.img_label.size(), QImage.Format_ARGB32)
+        self.mapWidget.mlayer.fill(Qt.black)
         self.tabView()
         self.createDock(self.tabview)
 
         self.setCentralWidget(self.mapWidget)
 
         self.show()
-
 
     def createMenubar(self):
         menuBar = self.menuBar()
@@ -278,9 +315,16 @@ class mapWindow(QMainWindow):
         menuBar.addMenu('&Temporary Test')
 
     def mappedAreaViewr(self):
-        mappedArea = ImgView()
-        mappedArea.uploadImg(resize_ratio=0.2, filePath=self.IMG_PATH)
-        self.mapWidget.layout.addWidget(mappedArea)
+        self.mappedArea = ImgView()
+        self.mappedArea.uploadImg(resize_ratio=0.2, filePath=self.IMG_PATH)
+        self.mapWidget.layout.addWidget(self.mappedArea)
+
+        '''self.view = GraphicsView()
+        self.pixmap = QPixmap(self.IMG_PATH)
+        self.view.set_image(self.pixmap)
+
+        self.mapWidget.viewLayout.addWidget(self.view)
+        self.mapWidget.layout.addLayout(self.mapWidget.viewLayout)'''
 
 
     def createDock(self, connectedWidget):
