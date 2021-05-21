@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QIcon, QPixmap, QCursor, QPainter
-from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon, QPixmap, QCursor, QPainter, QPalette, QBrush, QColor
+from PyQt5.QtCore import Qt, QRect
 from utils import parseXML
 
 
@@ -105,13 +105,13 @@ class MainWindow(QMainWindow):
 
         '''Dot Button'''
         self.dialog.dotBtn1 = QPushButton('...', self.dialog)
-        self.dialog.dotBtn1.resize(50, 30)
-        self.dialog.dotBtn1.move(523, 5)
+        self.dialog.dotBtn1.resize(33, 22)
+        self.dialog.dotBtn1.move(523, 9)
         self.dialog.dotBtn1.clicked.connect(self.imgDotBtnClick)
 
         self.dialog.dotBtn2 = QPushButton('...', self.dialog)
-        self.dialog.dotBtn2.resize(50, 30)
-        self.dialog.dotBtn2.move(523, 30)
+        self.dialog.dotBtn2.resize(33, 22)
+        self.dialog.dotBtn2.move(523, 34)
         self.dialog.dotBtn2.clicked.connect(self.xmlDotBtnClick)
 
         '''File Path'''
@@ -226,15 +226,15 @@ class ImgView(QScrollArea):
         # empty widget for scrollArea
         self.emptyWidget = QWidget()
         self.setWidget(self.emptyWidget)
-        #self.filePath = filePath
+
 
     def uploadImg(self, resize_ratio, filePath):
-        pixmap = QPixmap(filePath)
-        size = pixmap.size()
-        pixmap = pixmap.scaled(int(size.width() * resize_ratio), int(size.height() * resize_ratio))
-        img_label = QLabel()
-        img_label.setPixmap(pixmap)
-        self.setWidget(img_label)
+        self.pixmap = QPixmap(filePath)
+        size = self.pixmap.size()
+        self.pixmap.scaled(int(size.width() * resize_ratio), int(size.height() * resize_ratio))
+        self.img_label = QLabel()
+        self.img_label.setPixmap(self.pixmap)
+        self.setWidget(self.img_label)
 
 
 class mapWindow(QMainWindow):
@@ -244,7 +244,7 @@ class mapWindow(QMainWindow):
 
         self.IMG_PATH = img
         self.XML_PATH = xml
-        
+
         self.initWindowUi(title=self.title)
 
     def initWindowUi(self, title):
@@ -259,6 +259,12 @@ class mapWindow(QMainWindow):
         self.mapWidget.setLayout(self.mapWidget.layout)
 
         self.mappedAreaViewr()
+
+        self.layer = over_layer(self.mappedArea)
+        rect = QRect(self.mappedArea.x(), self.mappedArea.y(), self.mappedArea.width(), self.mappedArea.height())
+        self.layer.layerSetting(size=rect)
+        self.layer.setVisible(True)
+
         self.tabView()
         self.createDock(self.tabview)
 
@@ -278,9 +284,9 @@ class mapWindow(QMainWindow):
         menuBar.addMenu('&Temporary Test')
 
     def mappedAreaViewr(self):
-        mappedArea = ImgView()
-        mappedArea.uploadImg(resize_ratio=0.2, filePath=self.IMG_PATH)
-        self.mapWidget.layout.addWidget(mappedArea)
+        self.mappedArea = ImgView()
+        self.mappedArea.uploadImg(resize_ratio=0.2, filePath=self.IMG_PATH)
+        self.mapWidget.layout.addWidget(self.mappedArea)
 
 
     def createDock(self, connectedWidget):
@@ -353,6 +359,23 @@ class mapWindow(QMainWindow):
     def updateTab1(self):
         header = self.tabview.tab1.table.horizontalHeader()
         header.setResizeMode(QHeaderView.ResizeToContents)
+
+
+class over_layer(QWidget):
+    def __init__(self, parent=None):
+        super(over_layer, self).__init__(parent)
+
+        palette = QPalette(self.palette())
+        palette.setColor(palette.Background, Qt.black)
+
+        self.setPalette(palette)
+
+    def layerSetting(self, size):
+        painter = QPainter()
+        painter.begin(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        #painter.fillRect(event.rect(), QBrush(QColor(1, 1, 1, 100)))
+        painter.fillRect(size, QBrush(QColor(1, 1, 1, 100)))
 
 
 if __name__ == '__main__':
