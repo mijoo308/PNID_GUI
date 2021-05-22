@@ -2,7 +2,6 @@ import sys
 from PyQt5.QtWidgets import *
 
 from PyQt5.QtGui import QIcon, QPixmap, QCursor, QPainter,QImage, QPalette
-from PyQt5.QtCore import Qt
 
 from PyQt5.QtGui import QIcon, QPixmap, QCursor, QPainter, QPalette, QBrush, QColor
 from PyQt5.QtCore import Qt, QRect
@@ -239,44 +238,8 @@ class ImgView(QScrollArea):
         self.pixmap.scaled(int(size.width() * resize_ratio), int(size.height() * resize_ratio))
         self.img_label = QLabel()
         self.img_label.setPixmap(self.pixmap)
+
         self.setWidget(self.img_label)
-
-
-    def layer(self):
-        '''self.img_label.forepalette = QPalette(self.img_lable.palette())
-        self.img_label.forepalette.setColor(self.img_label.forepalette.Background, Qt.black)
-        self.setPalette(self.img_label.forepalette)
-        self.setWidget(self.img_label)'''
-        self.layer = QImage(self.img_label.size(), QImage.Format_ARGB32)
-        self.layer.fill(Qt.black)
-
-    #def test(self):
-
-class LayerItem(QGraphicsRectItem):
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.m_pixmap = QPixmap()
-
-    def reset(self, size):
-        self.m_pixmap = QPixmap(size)
-        self.m_pixmap.fill(Qt.black)
-
-class GraphicsView(QGraphicsView):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setScene(QGraphicsScene(self))
-
-        self.background_item = QGraphicsPixmapItem()
-        #self.foreground_item = LayerItem(self.background_item)
-        self.scene().addItem(self.background_item)
-        #self.scene().addItem(self.foreground_item)
-
-    def set_image(self, image):
-        self.background_item.setPixmap(image) #pixmap 넘겨줘야함
-        #self.foreground_item.reset(size=self.background_item.pixmap().size())
-        self.centerOn(self.background_item)
-
 
 
 class mapWindow(QMainWindow):
@@ -298,26 +261,20 @@ class mapWindow(QMainWindow):
 
         self.mapWidget = QWidget()
         self.mapWidget.layout = QHBoxLayout()
-        #self.mapWidget.viewLayout = QVBoxLayout()
         self.mapWidget.setLayout(self.mapWidget.layout)
         self.mappedAreaViewr()
 
-        self.mapWidget.mlayer = QImage(self.mappedArea.img_label.size(), QImage.Format_ARGB32)
-        self.mapWidget.mlayer.fill(Qt.black)
-
-
-        self.layer = over_layer(self.mappedArea)
-        rect = QRect(self.mappedArea.x(), self.mappedArea.y(), self.mappedArea.width(), self.mappedArea.height())
-        self.layer.layerSetting(size=rect)
+        self.layer = over_layer(self.mappedArea.img_label)
         self.layer.setVisible(True)
-
 
         self.tabView()
         self.createDock(self.tabview)
-
         self.setCentralWidget(self.mapWidget)
-
         self.show()
+
+    def resizeEvent(self, event): #윈도우 사이즈가 달라지면 호출되는 이벤트 함수
+        self.layer.resize(event.size())
+        event.accept()
 
     def createMenubar(self):
         menuBar = self.menuBar()
@@ -333,13 +290,6 @@ class mapWindow(QMainWindow):
         self.mappedArea = ImgView()
         self.mappedArea.uploadImg(resize_ratio=0.2, filePath=self.IMG_PATH)
         self.mapWidget.layout.addWidget(self.mappedArea)
-
-        '''self.view = GraphicsView()
-        self.pixmap = QPixmap(self.IMG_PATH)
-        self.view.set_image(self.pixmap)
-
-        self.mapWidget.viewLayout.addWidget(self.view)
-        self.mapWidget.layout.addLayout(self.mapWidget.viewLayout)'''
 
 
     def createDock(self, connectedWidget):
@@ -418,17 +368,11 @@ class over_layer(QWidget):
     def __init__(self, parent=None):
         super(over_layer, self).__init__(parent)
 
-        palette = QPalette(self.palette())
-        palette.setColor(palette.Background, Qt.black)
-
-        self.setPalette(palette)
-
-    def layerSetting(self, size):
+    def paintEvent(self, event):#painter에 그릴 때(?) 쓰는 이벤트 함수
         painter = QPainter()
         painter.begin(self)
+        painter.fillRect(event.rect(), QBrush(QColor(1, 1, 1, 100))) #TODO QBrush(Qt.transparent)로 바꿔주기
         painter.setRenderHint(QPainter.Antialiasing)
-        #painter.fillRect(event.rect(), QBrush(QColor(1, 1, 1, 100)))
-        painter.fillRect(size, QBrush(QColor(1, 1, 1, 100)))
 
 
 if __name__ == '__main__':
