@@ -1,5 +1,6 @@
 import os
 # from xml.etree.ElementTree import Element, SubElement, ElementTree
+import numpy as np
 
 import xml.etree.ElementTree as ET
 
@@ -60,7 +61,7 @@ def makeXML(drawing_width, drawing_height, txt_root, img_dir):
 def object_to_element(xml_obj, type):
     if type == 'gt':
         string = xml_obj[1].text
-        orientation = xml_obj[2].text
+        orientation = int(float(xml_obj[2].text))
         xmin = int(xml_obj[3][0].text)
         ymin = int(xml_obj[3][1].text)
         xmax = int(xml_obj[3][2].text)
@@ -70,7 +71,7 @@ def object_to_element(xml_obj, type):
 
     elif type == 'res':
         string = xml_obj[0].text
-        orientation = xml_obj[1].text
+        orientation = int(float(xml_obj[1].text))
         xmin = int(xml_obj[2][0].text)
         ymin = int(xml_obj[2][1].text)
         xmax = int(xml_obj[2][2].text)
@@ -89,8 +90,12 @@ def parseXML(xml_path, type):
     result = []
 
     for child in root.findall('object'):
+        visible = True
         string, orientation, xmin, ymin, xmax, ymax = object_to_element(child, type)
-        result.append([string, orientation, str(xmin), str(ymin), str(xmax), str(ymax)])
+        result.append([string, orientation, xmin, ymin, xmax, ymax, visible]) # add Visible
+
+    result = np.array(result) # np array 로 변환
+
     return result
 
 # for test
