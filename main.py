@@ -1,12 +1,12 @@
 import sys
+
 from PyQt5.QtWidgets import *
 
-from PyQt5.QtGui import QIcon, QPixmap, QCursor, QPainter,QImage, QPalette
-
-from PyQt5.QtGui import QIcon, QPixmap, QCursor, QPainter, QPalette, QBrush, QColor
+from PyQt5.QtGui import QIcon, QPixmap, QCursor, QPainter, QImage, QPalette, QPen, QStandardItemModel, QColor, QBrush
 from PyQt5.QtCore import Qt, QRect
 
 from utils import parseXML
+import numpy as np
 
 
 class MainWindow(QMainWindow):
@@ -25,11 +25,10 @@ class MainWindow(QMainWindow):
         self.createMenuBar()
         self.createToolBar()
 
-        #self.createImgListDock() # Dock 없어도 될 것 같음
+        # self.createImgListDock() # Dock 없어도 될 것 같음
         self.createImgViewer()
 
         self.show()
-
 
     def createMenuBar(self):
         menubar = self.menuBar()
@@ -81,10 +80,9 @@ class MainWindow(QMainWindow):
         self.file_toolbar.addAction(self.exceptFieldImgAction)
         self.file_toolbar.addAction(self.mapFieldImAction)
 
-
     def outlineMessageBox(self):
         QMessageBox.information(self, 'Information', '알림\n\n최대한 테두리 안쪽 영역을 선택해주십시오.\n(우클릭으로 선택)',
-                                         QMessageBox.Ok, QMessageBox.Ok)
+                                QMessageBox.Ok, QMessageBox.Ok)
 
     def exceptFieldMessageBox(self):
         QMessageBox.information(self, "Information", '알림\n\n최대한 표제 영역만을 선택해주십시오.\n(우클릭으로 선택)',
@@ -145,9 +143,9 @@ class MainWindow(QMainWindow):
 
     def btnClick(self):
         # imgView = ImgView()
-        self.ScrollableImgArea.uploadImg(resize_ratio=1, filePath=self.imgFilePath[0])
+        self.ScrollableImgArea.uploadImg(resize_ratio=0.2, filePath=self.imgFilePath[0])
         self.dialog.close()
-        self.callMappedArea() #테스트 해보려구 넣은 명려문 나중에 다른 곳으로 옮겨야 함
+        self.callMappedArea()  # 테스트 해보려구 넣은 명려문 나중에 다른 곳으로 옮겨야 함
 
     def callMappedArea(self):
         self.subwindow = mapWindow(img=self.imgFilePath[0], xml=self.xmlFilePath[0])
@@ -156,7 +154,6 @@ class MainWindow(QMainWindow):
         self.imgFilePath = QFileDialog.getOpenFileName(self, '열기', './', filter='*.jpg *.jpeg *.png')
         self.dialog.imgSource.setText(self.imgFilePath[0])
         self.dialog.path.append(self.imgFilePath[0])
-
 
     def xmlDotBtnClick(self):
         self.xmlFilePath = QFileDialog.getOpenFileName(self, '열기', './', filter='*.xml')
@@ -171,10 +168,11 @@ class MainWindow(QMainWindow):
         self.dockingWidget = QDockWidget("도면 목록")  # 타이틀 설정
         self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
         self.dockingWidget.setMinimumSize(int(self.frameGeometry().width() * 0.2), self.frameGeometry().height())
-        self.dockingWidget.setWidget(ImgListView()) #imgListView()랑 연결
+        self.dockingWidget.setWidget(ImgListView())  # imgListView()랑 연결
         self.dockingWidget.setFloating(False)  # ? False했는데도 움직여짐,,
 
         self.addDockWidget(Qt.LeftDockWidgetArea, self.dockingWidget)
+
 
 class ImgListView(QScrollArea):
     def __init__(self):
@@ -189,7 +187,7 @@ class ImgListView(QScrollArea):
 
         self.box_layout = QVBoxLayout()
         self.setLayout(self.box_layout)
-        self.setStyleSheet(# 레이아웃 확인용
+        self.setStyleSheet(  # 레이아웃 확인용
             "border-style: solid;"
             "border-width: 2px;"
             "border-color: red;"
@@ -206,7 +204,7 @@ class ImgListView(QScrollArea):
         self.emptyWidget.setLayout(self.box_layout)
 
     def makeImgListElement(self):
-        pixmap = QPixmap('test.jpg') # test
+        pixmap = QPixmap('test.jpg')  # test
         pixmap = pixmap.scaled(270, 150)
         img_label = QLabel()
         img_label.setPixmap(pixmap)
@@ -227,16 +225,17 @@ class ImgView(QScrollArea):
 
         self.setWidgetResizable(True)
 
-        # empty widget for scrollArea
-        self.emptyWidget = QWidget()
-        self.setWidget(self.emptyWidget)
-
-
     def uploadImg(self, resize_ratio, filePath):
+
         self.pixmap = QPixmap(filePath)
         size = self.pixmap.size()
         self.pixmap.scaled(int(size.width() * resize_ratio), int(size.height() * resize_ratio))
         self.img_label = QLabel()
+        self.img_label.setStyleSheet(  # 레이아웃 확인용
+            "border-style: solid;"
+            "border-width: 2px;"
+            "border-color: red;"
+            "border-radius: 3px")
         self.img_label.setPixmap(self.pixmap)
 
         self.setWidget(self.img_label)
@@ -249,6 +248,7 @@ class mapWindow(QMainWindow):
 
         self.IMG_PATH = img
         self.XML_PATH = xml
+        self.XML_RESULT = parseXML(self.XML_PATH, type='res')
 
         self.initWindowUi(title=self.title)
 
@@ -263,18 +263,28 @@ class mapWindow(QMainWindow):
         self.mapWidget.layout = QHBoxLayout()
         self.mapWidget.setLayout(self.mapWidget.layout)
         self.mappedAreaViewr()
+        self.mapWidget.setStyleSheet( # 레이아웃 확인용
+            "border-style: solid;"
+            "border-width: 2px;"
+            "border-color: blue;"
+            "border-radius: 3px")
 
-        self.layer = over_layer(self.mappedArea.img_label)
-        self.layer.setVisible(True)
+        # self.layer = over_layer(self.mappedArea.img_label)
+        self.layer = BoxViewModel(parsed_data=self.XML_RESULT,
+                                  parent=self.mappedArea.img_label)  ### TODO: XML_RESULT 관리
+
+        # TODO: resize ratio가 적용되도록 고쳐야함
+        self.layer.boxView.resize(self.mappedArea.img_label.width(), self.mappedArea.img_label.height()) # 자동으로 stretch 되어있음ㅜㅜ..
+        self.layer.boxView.setVisible(True)
 
         self.tabView()
         self.createDock(self.tabview)
         self.setCentralWidget(self.mapWidget)
         self.show()
 
-    def resizeEvent(self, event): #윈도우 사이즈가 달라지면 호출되는 이벤트 함수
-        self.layer.resize(event.size())
-        event.accept()
+    # def resizeEvent(self, event):  # 윈도우 사이즈가 달라지면 호출되는 이벤트 함수
+    #     # self.layer.boxView.resize(event.size())
+    #     event.accept()
 
     def createMenubar(self):
         menuBar = self.menuBar()
@@ -291,7 +301,6 @@ class mapWindow(QMainWindow):
         self.mappedArea.uploadImg(resize_ratio=0.2, filePath=self.IMG_PATH)
         self.mapWidget.layout.addWidget(self.mappedArea)
 
-
     def createDock(self, connectedWidget):
         self.dockingWidget = QDockWidget("XML Result")  # 타이틀 설정
         self.setCorner(Qt.TopRightCorner, Qt.RightDockWidgetArea)
@@ -300,7 +309,6 @@ class mapWindow(QMainWindow):
         self.dockingWidget.setFloating(False)
 
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockingWidget)
-
 
     def tabView(self):
         self.tabview = QWidget()
@@ -312,7 +320,7 @@ class mapWindow(QMainWindow):
         self.tabview.tabs = QTabWidget()
 
         self.tabview.tab1 = QWidget()
-        self.createTab1UI(self.XML_PATH)
+        self.createTab1UI(self.XML_RESULT)
 
         self.tabview.tab2 = QWidget()
 
@@ -324,22 +332,20 @@ class mapWindow(QMainWindow):
         self.tabview.tabLayout.addWidget(self.tabview.tabs)
         self.tabview.setLayout(self.tabview.tabLayout)
 
-
-    def createTab1UI(self, xml_path):
+    def createTab1UI(self, result):
 
         self.tabview.tab1.layout = QHBoxLayout()
-
-        '''XML Parsing'''
-        result = parseXML(xml_path, type='res')
-        table_size = len(result)
+        table_size = result.shape[0]
 
         '''Table'''
         self.tabview.tab1.table = QTableWidget()
         self.tabview.tab1.table.setRowCount(table_size)
         self.tabview.tab1.table.setColumnCount(8)
-        self.tabview.tab1.table.setHorizontalHeaderLabels(["v", "type", "text", "xmin", "ymin", "xmax", "ymax", "orientation"])
+        self.tabview.tab1.table.setHorizontalHeaderLabels(
+            ["v", "type", "text", "xmin", "ymin", "xmax", "ymax", "orientation"])
         self.tabview.tab1.layout.addWidget(self.tabview.tab1.table)
         self.tabview.tab1.setLayout(self.tabview.tab1.layout)
+        self.tabview.tab1.table.setEditTriggers(QAbstractItemView.AllEditTriggers)  # 테이블 내용 변경가능하도록 변경
 
         '''check box'''
         self.tabview.tab1.checkBoxList = []
@@ -364,15 +370,68 @@ class mapWindow(QMainWindow):
         header.setResizeMode(QHeaderView.ResizeToContents)
 
 
+# view
 class over_layer(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, data, parent=None):
         super(over_layer, self).__init__(parent)
 
-    def paintEvent(self, event):#painter에 그릴 때(?) 쓰는 이벤트 함수
-        painter = QPainter()
-        painter.begin(self)
-        painter.fillRect(event.rect(), QBrush(QColor(1, 1, 1, 100))) #TODO QBrush(Qt.transparent)로 바꿔주기
-        painter.setRenderHint(QPainter.Antialiasing)
+        self.box_data = data
+
+    def paintEvent(self, event):  # painter에 그릴 때(?) 쓰는 이벤트 함수
+        self.painter = QPainter()
+        self.painter.begin(self)
+        # self.painter.fillRect(event.rect(), QBrush(QColor(1, 1, 1, 100))) #TODO QBrush(Qt.transparent)로 바꿔주기
+        self.painter.setRenderHint(QPainter.Antialiasing)
+
+        self.painter.setBrush(QColor(255, 229, 204, 100))  # 채우기 색깔
+        self.painter.setPen(QPen(QColor(255, 128, 0), 3))  # 선 색깔
+        self.draw_rect(self.painter, self.box_data)
+
+    def draw_rect(self, qp, boxes):
+        # string, orientation, xmin, ymin, xmax, ymax, visible
+        for box in boxes:
+            visible = box[6]
+            if visible:
+                xmin = int(box[2])
+                ymin = int(box[3])
+                xmax = int(box[4])
+                ymax = int(box[5])
+                width = xmax - xmin
+                height = ymax - ymin
+                qp.drawRect(xmin, ymin, width, height)  # x,y,width,height
+
+
+# data
+class BoxModel:
+    def __init__(self, parsed_data):
+        super().__init__()
+        # self.model = QStandardItemModel()
+        self.data = parsed_data
+
+        # self.data = parsed_data # XMl result
+        # string, orientation, xmin, ymin, xmax, ymax, visible
+
+        # self.row = self.data.shape[0]
+        # self.col = self.data.shape[1]
+
+        # for i in range(self.col):  #
+        #     self.model.appendRow(self.data[:, i])
+
+
+class BoxViewModel:
+    def __init__(self, parsed_data, parent=None):
+        super().__init__()
+
+        self.data = parsed_data
+
+        self.boxModel = BoxModel(self.data)
+        self.boxView = over_layer(self.data, parent)
+
+    def getBoxData(self):
+        return self.boxModel.data
+
+    def setBoxData(self, newData, index):
+        self.boxModel.data[index] = newData
 
 
 if __name__ == '__main__':
