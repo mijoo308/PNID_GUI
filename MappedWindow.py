@@ -1,10 +1,10 @@
 import sys
 import numpy as np
-from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QDockWidget, QVBoxLayout, QTabWidget, QTableWidget,\
-    QAbstractItemView, QCheckBox, QTableWidgetItem, QHeaderView
+from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QDockWidget, QVBoxLayout, QTabWidget, QTableWidget, \
+    QAbstractItemView, QCheckBox, QTableWidgetItem, QHeaderView, QPushButton
 
 from PyQt5.QtGui import QPainter, QPen, QColor, QStandardItemModel
-from utils import parseXML
+from utils import parseXML, makeXML
 
 from ImgView import *
 
@@ -17,6 +17,8 @@ class MappedWindow(QMainWindow):
         self.IMG_PATH = img
         self.XML_PATH = xml
         self.XML_RESULT = parseXML(self.XML_PATH, type='res')
+
+        self.MODEL = BoxModel(self.XML_RESULT)
 
         self.initWindowUi(title=self.title)
 
@@ -38,7 +40,7 @@ class MappedWindow(QMainWindow):
             "border-radius: 3px")
 
         # self.layer = over_layer(self.mappedArea.img_label)
-        self.layer = BoxViewModel(parsed_data=self.XML_RESULT,
+        self.layer = BoxViewModel(data_model=self.MODEL,
                                   parent=self.mappedArea.img_label)  ### TODO: XML_RESULT 관리
 
         self.layer.boxView.resize(self.mappedArea.img_label.width(), self.mappedArea.img_label.height())
@@ -65,17 +67,44 @@ class MappedWindow(QMainWindow):
 
     def mappedAreaViewr(self):
         self.mappedArea = ImgView()
-        self.mappedArea.uploadImg(resize_ratio=2, filePath=self.IMG_PATH)
+        self.mappedArea.uploadImg(resize_ratio=1, filePath=self.IMG_PATH)
         self.mapWidget.layout.addWidget(self.mappedArea)
 
     def createDock(self, connectedWidget):
         self.dockingWidget = QDockWidget("XML Result")  # 타이틀 설정
         self.setCorner(Qt.TopRightCorner, Qt.RightDockWidgetArea)
         self.dockingWidget.setMinimumSize(int(self.frameGeometry().width() * 0.3), self.frameGeometry().height())
-        self.dockingWidget.setWidget(connectedWidget)
+        self.emptyWidgetforLayout = QWidget()
+        self.dockingWidget.setWidget(self.emptyWidgetforLayout)
+
+        self.emptyWidgetForButton = QWidget()
+        self.layoutForButton = QHBoxLayout()
+        self.emptyWidgetForButton.setLayout(self.layoutForButton)
+
+        ''' Top Button '''
+        self.addBoxBtn = QPushButton('Add Box')
+        self.deleteBoxBtn = QPushButton('Delete Box')
+        self.saveToXmlBtn = QPushButton('Save to XML')
+        self.layoutForButton.addWidget(self.addBoxBtn)
+        self.layoutForButton.addWidget(self.deleteBoxBtn)
+        self.layoutForButton.addWidget(self.saveToXmlBtn)
+
+        # self.addBoxBtn.clicked.connect(self.addBtnClicked)
+        # self.cellClicked.connect(self.cell_click)
+
+
+        ''' Dock '''
+        self.layoutInDock = QVBoxLayout()
+        self.layoutInDock.addWidget(self.emptyWidgetForButton)
+        self.layoutInDock.addWidget(connectedWidget)
+        self.emptyWidgetforLayout.setLayout(self.layoutInDock)
         self.dockingWidget.setFloating(False)
 
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockingWidget)
+
+    # def addBtnClicked(self):
+    #     self.tab1_table
+    #     # TODO: tableViewModel에서 이벤트 만든 후 연결하기
 
     def tabView(self):
         self.tabview = QWidget()
@@ -87,7 +116,7 @@ class MappedWindow(QMainWindow):
         self.tabview.tabs = QTabWidget()
 
         self.tabview.tab1 = QWidget()
-        self.createTab1UI(result=self.XML_RESULT)
+        self.createTab1UI()
 
         self.tabview.tab2 = QWidget()
 
@@ -99,11 +128,12 @@ class MappedWindow(QMainWindow):
         self.tabview.tabLayout.addWidget(self.tabview.tabs)
         self.tabview.setLayout(self.tabview.tabLayout)
 
-    def createTab1UI(self, result):
+    def createTab1UI(self):
 
         self.tabview.tab1.layout = QHBoxLayout()
+        self.tab1_table = TableView()
+        self.tableViewModel = TableViewModel(self.MODEL, self.tab1_table) # 원본 데이터 채워져 있을 것
 
-        self.tab1_table = TableView(result=result)
         self.tabview.tab1.layout.addWidget(self.tab1_table)
         self.tabview.tab1.setLayout(self.tabview.tab1.layout)
 
@@ -113,17 +143,22 @@ class MappedWindow(QMainWindow):
 
     # def getBoxData(self):
 
+# View
 class TableView(QTableWidget):
-    def __init__(self, result):
+    def __init__(self):
         super().__init__()
-        self.result = result
+        self.data = None
 
-        table_size = self.result.shape[0]
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.cellClicked.connect(self.cell_click)  # cellClick 이벤트를 감지하면 cell_click 함수를 실행
+
+    def setInitData(self, init_data):
+        self.data = init_data
+        table_size = self.data.shape[0]
         self.setRowCount(table_size)
         self.setColumnCount(8)
         self.setHorizontalHeaderLabels(
             ["v", "type", "text", "xmin", "ymin", "xmax", "ymax", "orientation"])
-        self.setEditTriggers(QAbstractItemView.AllEditTriggers)  # 테이블 내용 변경가능하도록 변경
 
         '''check box'''
         self.checkBoxList = []
@@ -134,14 +169,42 @@ class TableView(QTableWidget):
             self.setCellWidget(i, 0, self.checkBoxList[i])
 
             # result 순서 string, orientation, xmin, ymin, xmax, ymax
-            self.setItem(i, 2, QTableWidgetItem(self.result[i][0]))
-            self.setItem(i, 3, QTableWidgetItem(self.result[i][2]))
-            self.setItem(i, 4, QTableWidgetItem(self.result[i][3]))
-            self.setItem(i, 5, QTableWidgetItem(self.result[i][4]))
-            self.setItem(i, 6, QTableWidgetItem(self.result[i][5]))
-            self.setItem(i, 7, QTableWidgetItem(self.result[i][1]))
+            self.setItem(i, 2, QTableWidgetItem(self.data[i][0]))
+            self.setItem(i, 3, QTableWidgetItem(self.data[i][2]))
+            self.setItem(i, 4, QTableWidgetItem(self.data[i][3]))
+            self.setItem(i, 5, QTableWidgetItem(self.data[i][4]))
+            self.setItem(i, 6, QTableWidgetItem(self.data[i][5]))
+            self.setItem(i, 7, QTableWidgetItem(self.data[i][1]))
 
         self.setColumnWidth(0, 5)
+
+
+    def cell_click(self):
+        self.clicked_row = (self.selectedIndexes())[0].row()
+        print(self.clicked_row, 'clicked') # Test
+
+# ViewModel
+class TableViewModel:
+    def __init__(self, data_model, view):
+        super().__init__()
+
+        # 모델 객체 이용 (모델)
+        self.model = data_model
+        self.data = self.model.getData()
+        # self.boxModel = BoxModel(self.data)
+
+        # 처음엔 원본xml로 초기화 (뷰)
+        self.tableView = view
+        self.tableView.setInitData(self.data)
+
+    def getBoxData(self):
+        return self.data
+
+    def setBoxData(self, newData, index):
+        self.data[index] = newData
+
+
+
 
 # view
 class over_layer(QWidget):
@@ -181,35 +244,38 @@ class BoxModel:
     def __init__(self, parsed_data):
         super().__init__()
         self.data = parsed_data
-        # # string, orientation, xmin, ymin, xmax, ymax, visible
-        #
-        # self.row = self.data.shape[0]
-        # self.col = self.data.shape[1]
-        #
-        # self.model = QStandardItemModel()
-        # for i in range(self.col):
-        #     self.model.appendRow(self.data[:, i])
+        # string, orientation, xmin, ymin, xmax, ymax, visible
+
+    #     self.row = self.data.shape[0]
+    #     self.col = self.data.shape[1]
     #
-    # def getBoxData(self):
-
-
+    #     self.model = QStandardItemModel()
+    #     for i in range(self.col):
+    #         self.model.appendRow(self.data[:, i])
+    #
+    def getData(self):
+        return self.data
 
 
 
 class BoxViewModel:
-    def __init__(self, parsed_data, parent=None):
+    def __init__(self, data_model, parent=None):
         super().__init__()
 
-        self.data = parsed_data
+        # xml 원본 데이터로 초기화
+        self.model = data_model
+        self.data = self.model.getData()
 
-        self.boxModel = BoxModel(self.data)
+        # self.boxModel = BoxModel(self.data)
         self.boxView = over_layer(self.data, parent)
 
-    def getBoxData(self):
-        return self.boxModel.data
-
     def setBoxData(self, newData, index):
-        self.boxModel.data[index] = newData
+        self.data[index] = newData
 
     # # Button이랑 연결필요
-    # def makeXML(self):
+    # def finalResultToXML(self):
+    #
+    #     data = self.getBoxData()
+    #     if data[6]:   # TODO: visible index로  변경필요
+    #         makeXML(data)
+
