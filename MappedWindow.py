@@ -65,7 +65,7 @@ class MappedWindow(QMainWindow):
 
     def mappedAreaViewr(self):
         self.mappedArea = ImgView()
-        self.mappedArea.uploadImg(resize_ratio=0.1, filePath=self.IMG_PATH)
+        self.mappedArea.uploadImg(resize_ratio=2, filePath=self.IMG_PATH)
         self.mapWidget.layout.addWidget(self.mappedArea)
 
     def createDock(self, connectedWidget):
