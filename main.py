@@ -229,14 +229,16 @@ class ImgView(QScrollArea):
 
         self.pixmap = QPixmap(filePath)
         size = self.pixmap.size()
-        self.pixmap.scaled(int(size.width() * resize_ratio), int(size.height() * resize_ratio))
         self.img_label = QLabel()
+
+        self.img_label.setPixmap(self.pixmap.scaled(int(size.width() * resize_ratio),
+                                                    int(size.height() * resize_ratio), Qt.IgnoreAspectRatio))
+
         self.img_label.setStyleSheet(  # 레이아웃 확인용
             "border-style: solid;"
             "border-width: 2px;"
             "border-color: red;"
             "border-radius: 3px")
-        self.img_label.setPixmap(self.pixmap)
 
         self.setWidget(self.img_label)
 
@@ -298,7 +300,7 @@ class mapWindow(QMainWindow):
 
     def mappedAreaViewr(self):
         self.mappedArea = ImgView()
-        self.mappedArea.uploadImg(resize_ratio=0.2, filePath=self.IMG_PATH)
+        self.mappedArea.uploadImg(resize_ratio=0.1, filePath=self.IMG_PATH)
         self.mapWidget.layout.addWidget(self.mappedArea)
 
     def createDock(self, connectedWidget):
@@ -378,14 +380,15 @@ class over_layer(QWidget):
         self.box_data = data
 
     def paintEvent(self, event):  # painter에 그릴 때(?) 쓰는 이벤트 함수
-        self.painter = QPainter()
-        self.painter.begin(self)
-        # self.painter.fillRect(event.rect(), QBrush(QColor(1, 1, 1, 100))) #TODO QBrush(Qt.transparent)로 바꿔주기
-        self.painter.setRenderHint(QPainter.Antialiasing)
+        painter = QPainter()
+        painter.begin(self)
+        #painter.fillRect(event.rect(), QBrush(QColor(1, 1, 1, 100))) #TODO QBrush(Qt.transparent)로 바꿔주기
 
-        self.painter.setBrush(QColor(255, 229, 204, 100))  # 채우기 색깔
-        self.painter.setPen(QPen(QColor(255, 128, 0), 3))  # 선 색깔
-        self.draw_rect(self.painter, self.box_data)
+        painter.setBrush(QColor(255, 229, 204, 100))  # 채우기 색깔
+        painter.setPen(QPen(QColor(255, 128, 0), 3))  # 선 색깔
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        self.draw_rect(painter, self.box_data)
 
     def draw_rect(self, qp, boxes):
         # string, orientation, xmin, ymin, xmax, ymax, visible
