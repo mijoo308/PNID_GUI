@@ -1,7 +1,7 @@
 
-.xml
-.jpg
-.iml
-.pyc
+*.xml
+*.jpg
+*.iml
+*.pyc
 
 
