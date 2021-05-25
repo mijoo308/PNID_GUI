@@ -4,58 +4,38 @@ import numpy as np
 
 import xml.etree.ElementTree as ET
 
-def makeXML(drawing_width, drawing_height, txt_root, img_dir):
 
-    width = str(drawing_width)
-    height = str(drawing_height)
-    depth = '3' #
+def makeXML(Boxes):
+    root = ET.Element('annotation')
+    ET.SubElement(root, 'filename').text = '수정필요' # filename 수정필요
 
-    txt_list = []
-    for file in os.listdir(txt_root):
-        if file.endswith("origin_result.txt"):
-            txt_list.append(os.path.join(txt_root, file))
+    #TODO : 인덱스 수정 필요
+    for box in Boxes: #per Box
+        visible = box[6]
+        if visible == False:
+            continue
 
-    for txt_file in txt_list: #per Drawing
-        file_name = str(os.path.basename(txt_file).split('_')[0])
-        img_name = file_name + ".jpg"
-        # path = os.path.join(folder, img_name)
-        xml_txt_path = os.path.join(txt_root, file_name + ".xml")
-
-        root = ET.Element('annotation')
-
-        # basic_drawing_information = SubElement(root, 'basic_drawing_information')
-        # SubElement(basic_drawing_information, 'folder').text = folder
-        ET.SubElement(root, 'filename').text = img_name
-        # SubElement(root, 'path').text = path
-        # size = SubElement(root, 'size')
-        # SubElement(size, 'width').text = width
-        # SubElement(size, 'height').text = height
-        # SubElement(size, 'depth').text = depth
-
-        rf = open(txt_file, 'r', encoding='UTF8')
-        lines = rf.readlines()
-        rf.close()
-        for line in lines: #per Box
-            info = line.split('ㅣ')
-            xmin = info[0]
-            ymin = info[1]
-            xmax = info[2]
-            ymax = info[3]
-            string = info[4]
-            orientation = info[5]
-
-            symbol_object = ET.SubElement(root, 'object')
-            ET.SubElement(symbol_object, 'string').text = string
-            ET.SubElement(symbol_object, 'orientation').text = orientation
-            bndbox = ET.SubElement(symbol_object, 'bndbox')
-            ET.SubElement(bndbox, 'xmin').text = xmin
-            ET.SubElement(bndbox, 'ymin').text = ymin
-            ET.SubElement(bndbox, 'xmax').text = xmax
-            ET.SubElement(bndbox, 'ymax').text = ymax
+        xmin = box[0]
+        ymin = box[1]
+        xmax = box[2]
+        ymax = box[3]
+        string = box[4]
+        orientation = box[5]
+        symbol_object = ET.SubElement(root, 'symbol_object')
+        ET.SubElement(symbol_object, 'type').text = '수정필요' #수정필요
+        ET.SubElement(symbol_object, 'class').text = string
+        bndbox = ET.SubElement(symbol_object, 'bndbox')
+        ET.SubElement(bndbox, 'xmin').text = xmin
+        ET.SubElement(bndbox, 'ymin').text = ymin
+        ET.SubElement(bndbox, 'xmax').text = xmax
+        ET.SubElement(bndbox, 'ymax').text = ymax
+        ET.SubElement(symbol_object, 'degree').text = orientation
+        ET.SubElement(symbol_object, 'flip').text = 'n' # 수정필요할수도
+        ET.SubElement(symbol_object, 'etc').text = None # 수정필요할수도
 
 
-        tree = ET.ElementTree(root)
-        tree.write(xml_txt_path)
+    tree = ET.ElementTree(root)
+    tree.write('test.xml')  # 수정필요
 
 
 def object_to_element(xml_obj, type):
