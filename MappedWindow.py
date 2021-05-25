@@ -3,7 +3,7 @@ import numpy as np
 from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QDockWidget, QVBoxLayout, QTabWidget, QTableWidget,\
     QAbstractItemView, QCheckBox, QTableWidgetItem, QHeaderView
 
-from PyQt5.QtGui import QPainter, QPen, QColor
+from PyQt5.QtGui import QPainter, QPen, QColor, QStandardItemModel
 from utils import parseXML
 
 from ImgView import *
@@ -41,8 +41,7 @@ class MappedWindow(QMainWindow):
         self.layer = BoxViewModel(parsed_data=self.XML_RESULT,
                                   parent=self.mappedArea.img_label)  ### TODO: XML_RESULT 관리
 
-        # TODO: resize ratio가 적용되도록 고쳐야함
-        self.layer.boxView.resize(self.mappedArea.img_label.width(), self.mappedArea.img_label.height()) # 자동으로 stretch 되어있음ㅜㅜ..
+        self.layer.boxView.resize(self.mappedArea.img_label.width(), self.mappedArea.img_label.height())
         self.layer.boxView.setVisible(True)
 
         self.tabView()
@@ -88,7 +87,7 @@ class MappedWindow(QMainWindow):
         self.tabview.tabs = QTabWidget()
 
         self.tabview.tab1 = QWidget()
-        self.createTab1UI(self.XML_RESULT)
+        self.createTab1UI(result=self.XML_RESULT)
 
         self.tabview.tab2 = QWidget()
 
@@ -103,39 +102,46 @@ class MappedWindow(QMainWindow):
     def createTab1UI(self, result):
 
         self.tabview.tab1.layout = QHBoxLayout()
-        table_size = result.shape[0]
 
-        '''Table'''
-        self.tabview.tab1.table = QTableWidget()
-        self.tabview.tab1.table.setRowCount(table_size)
-        self.tabview.tab1.table.setColumnCount(8)
-        self.tabview.tab1.table.setHorizontalHeaderLabels(
-            ["v", "type", "text", "xmin", "ymin", "xmax", "ymax", "orientation"])
-        self.tabview.tab1.layout.addWidget(self.tabview.tab1.table)
+        self.tab1_table = TableView(result=result)
+        self.tabview.tab1.layout.addWidget(self.tab1_table)
         self.tabview.tab1.setLayout(self.tabview.tab1.layout)
-        self.tabview.tab1.table.setEditTriggers(QAbstractItemView.AllEditTriggers)  # 테이블 내용 변경가능하도록 변경
-
-        '''check box'''
-        self.tabview.tab1.checkBoxList = []
-        for i in range(table_size):
-            ckbox = QCheckBox()
-            self.tabview.tab1.checkBoxList.append(ckbox)
-        for i in range(table_size):
-            self.tabview.tab1.table.setCellWidget(i, 0, self.tabview.tab1.checkBoxList[i])
-
-            # result 순서 string, orientation, xmin, ymin, xmax, ymax
-            self.tabview.tab1.table.setItem(i, 2, QTableWidgetItem(result[i][0]))
-            self.tabview.tab1.table.setItem(i, 3, QTableWidgetItem(result[i][2]))
-            self.tabview.tab1.table.setItem(i, 4, QTableWidgetItem(result[i][3]))
-            self.tabview.tab1.table.setItem(i, 5, QTableWidgetItem(result[i][4]))
-            self.tabview.tab1.table.setItem(i, 6, QTableWidgetItem(result[i][5]))
-            self.tabview.tab1.table.setItem(i, 7, QTableWidgetItem(result[i][1]))
-
-        self.tabview.tab1.table.setColumnWidth(0, 5)
 
     def updateTab1(self):
-        header = self.tabview.tab1.table.horizontalHeader()
+        header = self.tab1_table.horizontalHeader()
         header.setResizeMode(QHeaderView.ResizeToContents)
+
+    # def getBoxData(self):
+
+class TableView(QTableWidget):
+    def __init__(self, result):
+        super().__init__()
+        self.result = result
+
+        table_size = self.result.shape[0]
+        self.setRowCount(table_size)
+        self.setColumnCount(8)
+        self.setHorizontalHeaderLabels(
+            ["v", "type", "text", "xmin", "ymin", "xmax", "ymax", "orientation"])
+        self.setEditTriggers(QAbstractItemView.AllEditTriggers)  # 테이블 내용 변경가능하도록 변경
+
+        '''check box'''
+        self.checkBoxList = []
+        for i in range(table_size):
+            ckbox = QCheckBox()
+            self.checkBoxList.append(ckbox)
+        for i in range(table_size):
+            self.setCellWidget(i, 0, self.checkBoxList[i])
+
+            # result 순서 string, orientation, xmin, ymin, xmax, ymax
+            self.setItem(i, 2, QTableWidgetItem(self.result[i][0]))
+            self.setItem(i, 3, QTableWidgetItem(self.result[i][2]))
+            self.setItem(i, 4, QTableWidgetItem(self.result[i][3]))
+            self.setItem(i, 5, QTableWidgetItem(self.result[i][4]))
+            self.setItem(i, 6, QTableWidgetItem(self.result[i][5]))
+            self.setItem(i, 7, QTableWidgetItem(self.result[i][1]))
+
+        self.setColumnWidth(0, 5)
 
 # view
 class over_layer(QWidget):
@@ -167,24 +173,27 @@ class over_layer(QWidget):
                 width = xmax - xmin
                 height = ymax - ymin
                 qp.drawRect(xmin, ymin, width, height)  # x,y,width,height
-        qp.drawRect(5,5,10,10)
+        qp.drawRect(5, 5, 10, 10)
 
 
 # data
 class BoxModel:
     def __init__(self, parsed_data):
         super().__init__()
-        # self.model = QStandardItemModel()
         self.data = parsed_data
-
-        # self.data = parsed_data # XMl result
-        # string, orientation, xmin, ymin, xmax, ymax, visible
-
+        # # string, orientation, xmin, ymin, xmax, ymax, visible
+        #
         # self.row = self.data.shape[0]
         # self.col = self.data.shape[1]
-
-        # for i in range(self.col):  #
+        #
+        # self.model = QStandardItemModel()
+        # for i in range(self.col):
         #     self.model.appendRow(self.data[:, i])
+    #
+    # def getBoxData(self):
+
+
+
 
 
 class BoxViewModel:
@@ -201,3 +210,6 @@ class BoxViewModel:
 
     def setBoxData(self, newData, index):
         self.boxModel.data[index] = newData
+
+    # # Button이랑 연결필요
+    # def makeXML(self):
