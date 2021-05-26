@@ -1,3 +1,4 @@
+import os
 import sys
 import numpy as np
 from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QDockWidget, QVBoxLayout, QTabWidget, QTableWidget, \
@@ -14,9 +15,11 @@ class MappedWindow(QMainWindow):
         super().__init__()
         self.title = img
 
+        self.IMG_NAME = os.path.basename(img).split('.')[0]
+
         self.IMG_PATH = img
         self.XML_PATH = xml
-        self.XML_RESULT = parseXML(self.XML_PATH, type='res')
+        self.XML_RESULT = parseXML(self.XML_PATH, xml_type='res')
 
         self.MODEL = BoxModel(self.XML_RESULT)
 
@@ -91,6 +94,7 @@ class MappedWindow(QMainWindow):
 
         # self.addBoxBtn.clicked.connect(self.addBtnClicked)
         # self.cellClicked.connect(self.cell_click)
+        self.saveToXmlBtn.clicked.connect(self.saveToXmlBtnClicked)
 
 
         ''' Dock '''
@@ -105,6 +109,9 @@ class MappedWindow(QMainWindow):
     # def addBtnClicked(self):
     #     self.tab1_table
     #     # TODO: tableViewModel에서 이벤트 만든 후 연결하기
+
+    def saveToXmlBtnClicked(self):
+        self.tab1_table.saveXML(self.IMG_NAME)
 
     def tabView(self):
         self.tabview = QWidget()
@@ -168,7 +175,8 @@ class TableView(QTableWidget):
         for i in range(table_size):
             self.setCellWidget(i, 0, self.checkBoxList[i])
 
-            # result 순서 string, orientation, xmin, ymin, xmax, ymax
+            # result 순서 string, orientation, xmin, ymin, xmax, ymax, type
+            self.setItem(i, 1, QTableWidgetItem(self.data[i][6]))
             self.setItem(i, 2, QTableWidgetItem(self.data[i][0]))
             self.setItem(i, 3, QTableWidgetItem(self.data[i][2]))
             self.setItem(i, 4, QTableWidgetItem(self.data[i][3]))
@@ -182,6 +190,9 @@ class TableView(QTableWidget):
     def cell_click(self):
         self.clicked_row = (self.selectedIndexes())[0].row()
         print(self.clicked_row, 'clicked') # Test
+
+    def saveXML(self, filename):
+        makeXML(self.data, filename)
 
 # ViewModel
 class TableViewModel:
@@ -276,6 +287,6 @@ class BoxViewModel:
     # def finalResultToXML(self):
     #
     #     data = self.getBoxData()
-    #     if data[6]:   # TODO: visible index로  변경필요
+    #     if data[6]:   # TODO: 일단 xml viewModel에서 만들게 되어있음
     #         makeXML(data)
 
