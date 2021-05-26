@@ -33,8 +33,9 @@ class ImgView(QScrollArea):
         self.installEventFilter(self)
 
     def eventFilter(self, source, event):
+
         if event.type() == event.MouseMove:
-            self.img_label.setCursor(QCursor(Qt.SizeAllCursor))
+            #self.img_label.setCursor(QCursor(Qt.SizeAllCursor))
 
             if self.last_time_move_x == 0:
                 self.last_time_move_x = event.pos().x()
@@ -45,13 +46,19 @@ class ImgView(QScrollArea):
             distance_x = self.last_time_move_x - event.pos().x()
             distance_y = self.last_time_move_y - event.pos().y()
 
-            # print(self.last_time_move_y, QEvent.pos().y(), distance_y, self.scrollBarY.value())
-            self.scrollBarX.setValue(self.scrollBarX.value() + distance_x)
-            self.scrollBarY.setValue(self.scrollBarY.value() + distance_y)
+            #print(self.last_time_move_x, event.pos().x(), distance_x, self.scrollbarX.value())
+            #print(self.last_time_move_y, event.pos().y(), distance_y, self.scrollbarY.value())
+
+            self.scrollbarX.setValue(self.scrollbarX.value() + distance_x)
+            self.scrollbarY.setValue(self.scrollbarY.value() + distance_y)
+
+            #print(self.scrollbarX.value())
+            #print(self.scrollbarY.value())
 
 
         elif event.type() == event.MouseButtonRelease:
+
             self.last_time_move_x = self.last_time_move_y = 0
-            self.img_label.setCursor(QCursor(Qt.PointingHandCursor))
+            #self.img_label.setCursor(QCursor(Qt.PointingHandCursor))
 
         return QWidget.eventFilter(self, source, event)
