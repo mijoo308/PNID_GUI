@@ -36,7 +36,7 @@ def makeXML(Boxes, filename):
         ET.SubElement(symbol_object, 'flip').text = 'n'
         ET.SubElement(symbol_object, 'etc').text = None
 
-
+    indent(root)
     tree = ET.ElementTree(root)
     tree.write(filename + '_fixed.xml')
 
@@ -87,5 +87,23 @@ def parseXML(xml_path, xml_type):
     result = np.array(result)  # np array 로 변환
 
     return result
+
+def indent(elem, level=0):  # 자료 출처 https://goo.gl/J8VoDK
+    """ XML의 들여쓰기 포함한 출력을 위한 함수
+
+    """
+    i = "\n" + level * "  "
+    if len(elem):
+        if not elem.text or not elem.text.strip():
+            elem.text = i + "  "
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = i
+        for elem in elem:
+            indent(elem, level + 1)
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = i
+    else:
+        if level and (not elem.tail or not elem.tail.strip()):
+            elem.tail = i
 
 
