@@ -1,6 +1,7 @@
 import os
 import sys
 import numpy as np
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtProperty
 from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QDockWidget, QVBoxLayout, QTabWidget, QTableWidget, \
     QAbstractItemView, QCheckBox, QTableWidgetItem, QHeaderView, QPushButton
 
@@ -155,12 +156,18 @@ class TableView(QTableWidget):
     def __init__(self):
         super().__init__()
         self.data = None
-
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.cellClicked.connect(self.cell_click)  # cellClick 이벤트를 감지하면 cell_click 함수를 실행
 
-    def setInitData(self, init_data):
-        self.data = init_data
+
+        ''' signal to connect with ViewModel '''  # View Model에서 사용
+    def setSignal(self, on_data_changed_func, get_data_func):
+        self.on_data_changed = on_data_changed_func
+        self.get_data = get_data_func
+
+
+    def setInitData(self):
+        self.data = self.get_data()
         table_size = self.data.shape[0]
         self.setRowCount(table_size)
         self.setColumnCount(8)
@@ -186,13 +193,36 @@ class TableView(QTableWidget):
 
         self.setColumnWidth(0, 5)
 
+    # def on_table_valueChanged(self, value):
+    #     self.lcd.display(value)
+    #     self.printLabel(value)
+    #     self.logLabel(value)
+
+
+    def setTableCell(self, newData, i):
+        self.setItem(i, 1, QTableWidgetItem(self.newData[i][6]))
+        self.setItem(i, 2, QTableWidgetItem(self.newData[i][0]))
+        self.setItem(i, 3, QTableWidgetItem(self.newData[i][2]))
+        self.setItem(i, 4, QTableWidgetItem(self.newData[i][3]))
+        self.setItem(i, 5, QTableWidgetItem(self.newData[i][4]))
+        self.setItem(i, 6, QTableWidgetItem(self.newData[i][5]))
+        self.setItem(i, 7, QTableWidgetItem(self.newData[i][1]))
+
+    def getTableCell(self, i):
+        result = []
+        for j in range(1, self.columnCount()):
+            result.append(self.item(i, j).text())
+
+        return result
 
     def cell_click(self):
         self.clicked_row = (self.selectedIndexes())[0].row()
         print(self.clicked_row, 'clicked') # Test
+        print(self.getTableCell(self.clicked_row)) # Test
+        self.on_data_changed(self.clicked_row)
 
     def saveXML(self, filename):
-        makeXML(self.data, filename)
+        makeXML(self.get_data(), filename)
 
 # ViewModel
 class TableViewModel:
@@ -201,28 +231,39 @@ class TableViewModel:
 
         # 모델 객체 이용 (모델)
         self.model = data_model
-        self.data = self.model.getData()
+        # self.data = self.model.getData()
         # self.boxModel = BoxModel(self.data)
 
         # 처음엔 원본xml로 초기화 (뷰)
+        self.Test = False
         self.tableView = view
-        self.tableView.setInitData(self.data)
+        self.tableView.setSignal(on_data_changed_func=self.getChagedDataFromView, get_data_func=self.getBoxData)
+        self.tableView.setInitData()
+
+    def getChagedDataFromView(self, value):
+        print(value, 'value from Table is Changed')
 
     def getBoxData(self):
-        return self.data
+        return self.model.getBoxData()
 
-    def setBoxData(self, newData, index):
-        self.data[index] = newData
+    def updateBoxData(self, newData, index):
+        self.model.setBoxData(newData, index)
+
 
 
 
 
 # view
 class over_layer(QWidget):
-    def __init__(self, data, parent=None):
+    def __init__(self, parent=None):
         super(over_layer, self).__init__(parent)
 
-        self.box_data = data
+        # self.data = None
+
+        ''' signal to connect with ViewModel '''  # View Model에서 사용
+    def setSignal(self, on_data_changed_func, get_data_func):
+        self.on_data_changed = on_data_changed_func
+        self.get_data = get_data_func
 
     def paintEvent(self, event):  # painter에 그릴 때(?) 쓰는 이벤트 함수
         painter = QPainter()
@@ -233,11 +274,13 @@ class over_layer(QWidget):
         painter.setPen(QPen(QColor(255, 128, 0), 3))  # 선 색깔
         painter.setRenderHint(QPainter.Antialiasing)
 
-        self.draw_rect(painter, self.box_data)
+        self.draw_rect(painter)
 
-    def draw_rect(self, qp, boxes):
+    def draw_rect(self, qp):
+
+        self.data = self.get_data()
         # string, orientation, xmin, ymin, xmax, ymax, visible
-        for box in boxes:
+        for box in self.data:
             visible = box[6]
             if visible:
                 xmin = int(box[2])
@@ -264,29 +307,33 @@ class BoxModel:
     #     for i in range(self.col):
     #         self.model.appendRow(self.data[:, i])
     #
-    def getData(self):
+    def getBoxData(self):
         return self.data
 
+    def setBoxData(self, newData, index):
+        self.data[index] = newData
 
 
 class BoxViewModel:
     def __init__(self, data_model, parent=None):
         super().__init__()
 
+
         # xml 원본 데이터로 초기화
         self.model = data_model
-        self.data = self.model.getData()
+        # self.data = self.model.getBoxData()
 
         # self.boxModel = BoxModel(self.data)
-        self.boxView = over_layer(self.data, parent)
+        self.boxView = over_layer(parent)
+        self.boxView.setSignal(on_data_changed_func=self.getChagedDataFromView, get_data_func=self.getBoxData)
 
-    def setBoxData(self, newData, index):
-        self.data[index] = newData
+    def getChagedDataFromView(self, value):
+        print(value, 'value from View is Changed')
 
-    # # Button이랑 연결필요
-    # def finalResultToXML(self):
-    #
-    #     data = self.getBoxData()
-    #     if data[6]:   # TODO: 일단 xml viewModel에서 만들게 되어있음
-    #         makeXML(data)
+    def getBoxData(self):
+        return self.model.getBoxData()
+
+    def updateBoxData(self, newData, index):
+        self.model.setBoxData(newData, index)
+
 
