@@ -62,3 +62,23 @@ class ImgView(QScrollArea):
             #self.img_label.setCursor(QCursor(Qt.PointingHandCursor))
 
         return QWidget.eventFilter(self, source, event)
+
+    def wheelEvent(self, wheel_event):
+
+        if wheel_event.modifiers() == Qt.ControlModifier:
+            delta = wheel_event.angleDelta().y()
+            if delta > 0:
+                self.zoom_in()
+
+            elif delta < 0:
+                self.zoom_out()
+
+        else:
+            return super().wheelEvent(wheel_event)
+
+    def zoom_in(self):
+        self.img_label.setPixmap(self.pixmap.scaled(int(self.img_label.size().width * 0.8),
+                                                    int(elf.img_label.size().height() * 0.8), Qt.IgnoreAspectRatio))
+    def zoom_out(self):
+        self.img_label.setPixmap(self.pixmap.scaled(int(self.img_label.size().width * 1.2),
+                                                    int(elf.img_label.size().height() * 1.2), Qt.IgnoreAspectRatio))
