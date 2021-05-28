@@ -191,7 +191,10 @@ class TableView(QTableWidget):
             self.setItem(i, 6, QTableWidgetItem(self.data[i][5]))
             self.setItem(i, 7, QTableWidgetItem(self.data[i][1]))
 
-        self.setColumnWidth(0, 5)
+        for i in range(8):
+            if i == 2:
+                continue
+            self.resizeColumnToContents(i)
 
     # def on_table_valueChanged(self, value):
     #     self.lcd.display(value)
@@ -241,7 +244,7 @@ class TableViewModel:
         self.tableView.setInitData()
 
     def getChagedDataFromView(self, value):
-        print(value, 'value from Table is Changed')
+        print(value, 'value from Table is Changed') #TODO : 수정 필요
 
     def getBoxData(self):
         return self.model.getBoxData()
@@ -328,7 +331,7 @@ class BoxViewModel:
         self.boxView.setSignal(on_data_changed_func=self.getChagedDataFromView, get_data_func=self.getBoxData)
 
     def getChagedDataFromView(self, value):
-        print(value, 'value from View is Changed')
+        print(value, 'value from View is Changed') #TODO: 수정 필요
 
     def getBoxData(self):
         return self.model.getBoxData()
