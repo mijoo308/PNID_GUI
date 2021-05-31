@@ -13,16 +13,17 @@ def makeXML(Boxes, filename):
     # string, orientation, xmin, ymin, xmax, ymax, visible
     for box in Boxes: #per Box
         visible = box[-1]
-        if not visible:
+        if visible == '0': #TODO: bool 타입으로 저장이 안되는 것 수정 필요
+            print('false')
             continue
 
-        string = box[0]
-        orientation = box[1]
+        string = box[1]
+        orientation = box[6]
         xmin = box[2]
         ymin = box[3]
         xmax = box[4]
         ymax = box[5]
-        type = box[6]
+        type = box[0]
 
         symbol_object = ET.SubElement(root, 'symbol_object')
         ET.SubElement(symbol_object, 'type').text = type
@@ -56,10 +57,10 @@ def object_to_element(xml_obj, xml_type):
         orientation = int(float(xml_obj.find('degree').text))
         type = xml_obj.find('type').text
 
-    xmin = int(bndbox[0].text)
-    ymin = int(bndbox[1].text)
-    xmax = int(bndbox[2].text)
-    ymax = int(bndbox[3].text)
+    xmin = bndbox[0].text
+    ymin = bndbox[1].text
+    xmax = bndbox[2].text
+    ymax = bndbox[3].text
 
     return string, orientation, xmin, ymin, xmax, ymax, type
 
@@ -82,7 +83,7 @@ def parseXML(xml_path, xml_type):
     for child in root.findall(object):
         visible = True
         string, orientation, xmin, ymin, xmax, ymax, type = object_to_element(child, xml_type)
-        result.append([string, orientation, xmin, ymin, xmax, ymax, type, visible])  # add Visible
+        result.append([type, string, xmin, ymin, xmax, ymax, orientation, visible])  # add Visible
 
     result = np.array(result)  # np array 로 변환
 
