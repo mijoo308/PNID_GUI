@@ -3,7 +3,7 @@ import sys
 import numpy as np
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtProperty
 from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QDockWidget, QVBoxLayout, QTabWidget, QTableWidget, \
-    QAbstractItemView, QCheckBox, QTableWidgetItem, QHeaderView, QPushButton
+    QAbstractItemView, QCheckBox, QTableWidgetItem, QHeaderView, QPushButton, QAction
 
 from PyQt5.QtGui import QPainter, QPen, QColor, QStandardItemModel
 from utils import parseXML, makeXML
@@ -15,6 +15,7 @@ class MappedWindow(QMainWindow):
     def __init__(self, img, xml):
         super().__init__()
         self.title = img
+        self.scaleFactor = 0.0
 
         self.IMG_NAME = os.path.basename(img).split('.')[0]
 
@@ -31,6 +32,7 @@ class MappedWindow(QMainWindow):
         self.move(100, 100)
         self.resize(1600, 800)
 
+        self.createActioon()
         self.createMenubar()
 
         self.mapWidget = QWidget()
@@ -55,9 +57,28 @@ class MappedWindow(QMainWindow):
         self.setCentralWidget(self.mapWidget)
         self.show()
 
-    # def resizeEvent(self, event):  # 윈도우 사이즈가 달라지면 호출되는 이벤트 함수
-    #     # self.layer.boxView.resize(event.size())
-    #     event.accept()
+    def createActioon(self):
+        self.zoomInAct = QAction("Zoom &In (25%)", self, shortcut='Ctrl++', enabled=True, triggered=self.zoomIn)
+        self.zoomOutAct = QAction("Zoom &Out (25%)", self, shortcut='Ctrl+-', enabled=True, triggered=self.zoomOut)
+
+    def zoomIn(self):
+        self.scaleImage(1.25)
+    def zoomOut(self):
+        self.scaleImage(0.8)
+
+    def scaleImage(self, factor):
+        self.scaleFactor *= factor
+        self.mappedArea.img_label.resize(self.scaleFactor * self.mappedArea.img_label.pixmap().size())
+
+        self.adjustScrollBar(self.mappedArea.scrollbarX, factor)
+        self.adjustScrollBar(self.mappedArea.scrollbarY, factor)
+
+        self.zoomInAct.setEnabled(self.scaleFactor < 4.0)
+        self.zoomOutAct.setEnabled(self.scaleFactor > 0.222)
+        
+    def adjustScrollBar(self, scrollBar, factor):
+        scrollBar.setValue(int(factor * scrollBar.value()
+                               + ((factor - 1) * scrollBar.pageStep() / 2)))
 
     def createMenubar(self):
         menuBar = self.menuBar()
@@ -68,10 +89,14 @@ class MappedWindow(QMainWindow):
         menuBar.addMenu('&Recognition')
         menuBar.addMenu('&Unit Function Test')
         menuBar.addMenu('&Temporary Test')
+        zoom = menuBar.addMenu('&Zoom')
+        zoom.addAction(self.zoomInAct)
+        zoom.addAction(self.zoomOutAct)
 
     def mappedAreaViewr(self):
         self.mappedArea = ImgView()
-        self.mappedArea.uploadImg(resize_ratio=1, filePath=self.IMG_PATH)
+        self.mappedArea.uploadImg(resize_ratio=0.4, filePath=self.IMG_PATH)
+        self.scaleFactor = 1.0
         self.mapWidget.layout.addWidget(self.mappedArea)
 
     def createDock(self, connectedWidget):
@@ -278,10 +303,6 @@ class TableViewModel:
 
     def updateBoxData(self, i, newData):
         self.model.setBoxData(i, newData)
-
-
-
-
 
 # view
 class over_layer(QWidget):

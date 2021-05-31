@@ -19,7 +19,7 @@ class ImgView(QScrollArea):
         self.pixmap = QPixmap(filePath)
         size = self.pixmap.size()
         self.img_label = QLabel()
-
+        self.img_label.setScaledContents(True)
         self.img_label.setPixmap(self.pixmap.scaled(int(size.width() * resize_ratio),
                                                     int(size.height() * resize_ratio), Qt.IgnoreAspectRatio))
 
@@ -35,7 +35,6 @@ class ImgView(QScrollArea):
     def eventFilter(self, source, event):
 
         if event.type() == event.MouseMove:
-            #self.img_label.setCursor(QCursor(Qt.SizeAllCursor))
 
             if self.last_time_move_x == 0:
                 self.last_time_move_x = event.pos().x()
@@ -46,14 +45,8 @@ class ImgView(QScrollArea):
             distance_x = self.last_time_move_x - event.pos().x()
             distance_y = self.last_time_move_y - event.pos().y()
 
-            #print(self.last_time_move_x, event.pos().x(), distance_x, self.scrollbarX.value())
-            #print(self.last_time_move_y, event.pos().y(), distance_y, self.scrollbarY.value())
-
             self.scrollbarX.setValue(self.scrollbarX.value() + distance_x)
             self.scrollbarY.setValue(self.scrollbarY.value() + distance_y)
-
-            #print(self.scrollbarX.value())
-            #print(self.scrollbarY.value())
 
 
         elif event.type() == event.MouseButtonRelease:
@@ -62,23 +55,3 @@ class ImgView(QScrollArea):
             #self.img_label.setCursor(QCursor(Qt.PointingHandCursor))
 
         return QWidget.eventFilter(self, source, event)
-
-    def wheelEvent(self, wheel_event):
-
-        if wheel_event.modifiers() == Qt.ControlModifier:
-            delta = wheel_event.angleDelta().y()
-            if delta > 0:
-                self.zoom_in()
-
-            elif delta < 0:
-                self.zoom_out()
-
-        else:
-            return super().wheelEvent(wheel_event)
-
-    def zoom_in(self):
-        self.img_label.setPixmap(self.pixmap.scaled(int(self.img_label.size().width * 0.8),
-                                                    int(elf.img_label.size().height() * 0.8), Qt.IgnoreAspectRatio))
-    def zoom_out(self):
-        self.img_label.setPixmap(self.pixmap.scaled(int(self.img_label.size().width * 1.2),
-                                                    int(elf.img_label.size().height() * 1.2), Qt.IgnoreAspectRatio))
