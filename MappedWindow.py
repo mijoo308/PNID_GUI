@@ -1,11 +1,13 @@
 import os
 import sys
 import numpy as np
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtProperty
+from PyQt5.QtCore import QObject, pyqtSignal
 from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QDockWidget, QVBoxLayout, QTabWidget, QTableWidget, \
     QAbstractItemView, QCheckBox, QTableWidgetItem, QHeaderView, QPushButton, QAction
 
 from PyQt5.QtGui import QPainter, QPen, QColor, QStandardItemModel
+
+from LayerView import *
 from utils import parseXML, makeXML
 
 from ImgView import *
@@ -39,22 +41,28 @@ class MappedWindow(QMainWindow):
         self.mapWidget.layout = QHBoxLayout()
         self.mapWidget.setLayout(self.mapWidget.layout)
         self.mappedAreaViewr()
-        self.mapWidget.setStyleSheet( # 레이아웃 확인용
+        self.mapWidget.setStyleSheet(  # 레이아웃 확인용
             "border-style: solid;"
             "border-width: 2px;"
             "border-color: blue;"
             "border-radius: 3px")
 
         # self.layer = over_layer(self.mappedArea.img_label)
-        self.layer = BoxViewModel(data_model=self.MODEL,
-                                  parent=self.mappedArea.img_label)  ### TODO: XML_RESULT 관리
-
-        self.layer.boxView.resize(self.mappedArea.img_label.width(), self.mappedArea.img_label.height())
-        self.layer.boxView.setVisible(True)
+        # self.layer = BoxViewModel(data_model=self.MODEL,
+        #                           parent=self.mappedArea.img_label)  ### TODO: XML_RESULT 관리
+        #
+        # self.layer.boxView.resize(self.mappedArea.img_label.width(), self.mappedArea.img_label.height())
+        # self.layer.boxView.setVisible(True)
 
         self.tabView()
         self.createDock(self.tabview)
-        self.setCentralWidget(self.mapWidget)
+        # self.setCentralWidget(self.mapWidget)
+        self.layerView = LayerView(self.IMG_PATH)
+        self.layerViewModel = LayerViewModel(self.MODEL, self.layerView)  # 원본 데이터 채워져 있을 것
+        # self.scene = GraphicsScene()
+        # self.scene.set_image(self.IMG_PATH)
+        # self.layerView.setScene(self.scene)
+        self.setCentralWidget(self.layerView)
         self.show()
 
     def createActioon(self):
@@ -63,6 +71,7 @@ class MappedWindow(QMainWindow):
 
     def zoomIn(self):
         self.scaleImage(1.25)
+
     def zoomOut(self):
         self.scaleImage(0.8)
 
@@ -75,7 +84,7 @@ class MappedWindow(QMainWindow):
 
         self.zoomInAct.setEnabled(self.scaleFactor < 4.0)
         self.zoomOutAct.setEnabled(self.scaleFactor > 0.222)
-        
+
     def adjustScrollBar(self, scrollBar, factor):
         scrollBar.setValue(int(factor * scrollBar.value()
                                + ((factor - 1) * scrollBar.pageStep() / 2)))
@@ -122,7 +131,6 @@ class MappedWindow(QMainWindow):
         # self.cellClicked.connect(self.cell_click)
         self.saveToXmlBtn.clicked.connect(self.saveToXmlBtnClicked)
 
-
         ''' Dock '''
         self.layoutInDock = QVBoxLayout()
         self.layoutInDock.addWidget(self.emptyWidgetForButton)
@@ -162,10 +170,9 @@ class MappedWindow(QMainWindow):
         self.tabview.setLayout(self.tabview.tabLayout)
 
     def createTab1UI(self):
-
         self.tabview.tab1.layout = QHBoxLayout()
         self.tab1_table = TableView()
-        self.tableViewModel = TableViewModel(self.MODEL, self.tab1_table) # 원본 데이터 채워져 있을 것
+        self.tableViewModel = TableViewModel(self.MODEL, self.tab1_table)  # 원본 데이터 채워져 있을 것
 
         self.tabview.tab1.layout.addWidget(self.tab1_table)
         self.tabview.tab1.setLayout(self.tabview.tab1.layout)
@@ -176,23 +183,25 @@ class MappedWindow(QMainWindow):
 
     # def getBoxData(self):
 
+
 # View
 class TableView(QTableWidget):
     def __init__(self):
         super().__init__()
         self.data = None
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.IsInitialized = False # itemChanged 때문에
+        self.IsInitialized = False  # itemChanged 때문에
         self.cellClicked.connect(self.cell_click)  # cellClick 이벤트를 감지하면 cell_click 함수를 실행
         self.itemChanged.connect(self.cell_edit)
 
-        #TODO: checkbox event 설정 필요
-
+        # TODO: checkbox event 설정 필요
 
         ''' signal to connect with ViewModel '''  # View Model에서 사용
-    def setSignal(self, on_data_changed_func, get_data_func):
-        self.on_data_changed = on_data_changed_func
+
+    def setSignal(self, on_data_changed_from_view, get_data_func):
+        self.on_data_changed = on_data_changed_from_view
         self.get_data = get_data_func
+
 
     # def itemChanged(self, item): # connect 할 거면 쓰면 안 됨
     #     self.chaged_row = item.row()
@@ -215,7 +224,7 @@ class TableView(QTableWidget):
             self.checkBoxList.append(ckbox)
         for i in range(table_size):
             self.setCellWidget(i, 0, self.checkBoxList[i])
-            self.checkBoxList[i].setChecked(True) # checked가 default
+            self.checkBoxList[i].setChecked(True)  # checked가 default
 
             # 순서: type, string, xmin, ymin, xmax, ymax, orientation, visible
             self.setItem(i, 1, QTableWidgetItem(self.data[i][0]))
@@ -236,7 +245,6 @@ class TableView(QTableWidget):
     #     self.printLabel(value)
     #     self.logLabel(value)
 
-
     def setTableCell(self, newData, i):
         self.setItem(i, 1, QTableWidgetItem(self.newData[i][6]))
         self.setItem(i, 2, QTableWidgetItem(self.newData[i][0]))
@@ -255,8 +263,8 @@ class TableView(QTableWidget):
 
     def cell_click(self):
         clicked_row = (self.selectedIndexes())[0].row()
-        print(clicked_row, 'clicked') # Test
-        print(self.getTableCell(clicked_row)) # Test
+        print(clicked_row, 'clicked')  # Test
+        print(self.getTableCell(clicked_row))  # Test
 
     def cell_edit(self):
         if self.IsInitialized:
@@ -264,16 +272,21 @@ class TableView(QTableWidget):
             edited_cell = self.getTableCell(edited_row)
 
             if self.checkBoxList[edited_row].isChecked():
-                edited_cell.append(1) #TODO: bool 타입으로 저장이 안되는 것 수정 필요
+                edited_cell.append(1)  # TODO: bool 타입으로 저장이 안되는 것 수정 필요
             else:
                 edited_cell.append(0)
 
-            edited_cell = np.array(edited_cell) # list type -> np
+            edited_cell = np.array(edited_cell)  # list type -> np
             print(edited_row, 'changed')  # Test
             self.on_data_changed(edited_row, edited_cell)
 
     def saveXML(self, filename):
         makeXML(self.get_data(), filename)
+
+    def selectionChange(self,i): # ViewModel에서 사용
+        self.setCurrentCell(i, 1)
+
+
 
 # ViewModel
 class TableViewModel:
@@ -282,20 +295,23 @@ class TableViewModel:
 
         # 모델 객체 이용 (모델)
         self.model = data_model
+        self.selectedIndex = None
         # self.data = self.model.getData()
         # self.boxModel = BoxModel(self.data)
 
         # 처음엔 원본xml로 초기화 (뷰)
         self.Test = False
         self.tableView = view
-        self.tableView.setSignal(on_data_changed_func=self.getChagedDataFromView, get_data_func=self.getBoxData)
+        self.tableView.setSignal(on_data_changed_from_view=self.getChagedDataFromView, get_data_func=self.getBoxData)
+        self.model.setTableSignal(notify_selected_to_table=self.selectedFromLayer)
         self.tableView.setInitData()
         self.tableView.IsInitialized = True
+
 
     def getChagedDataFromView(self, row, value):
         self.updateBoxData(row, value)
 
-        print(row, value, "is changed") # test
+        print(row, value, "is changed")  # test
         # box 그리는 것도 추가해야함
 
     def getBoxData(self):
@@ -303,6 +319,11 @@ class TableViewModel:
 
     def updateBoxData(self, i, newData):
         self.model.setBoxData(i, newData)
+
+    def selectedFromLayer(self,i):
+        self.selectedIndex = i
+        self.tableView.selectionChange(self.selectedIndex)
+
 
 # view
 class over_layer(QWidget):
@@ -312,6 +333,7 @@ class over_layer(QWidget):
         # self.data = None
 
         ''' signal to connect with ViewModel '''  # View Model에서 사용
+
     def setSignal(self, on_data_changed_func, get_data_func):
         self.on_data_changed = on_data_changed_func
         self.get_data = get_data_func
@@ -319,7 +341,7 @@ class over_layer(QWidget):
     def paintEvent(self, event):  # painter에 그릴 때(?) 쓰는 이벤트 함수
         painter = QPainter()
         painter.begin(self)
-        #painter.fillRect(event.rect(), QBrush(QColor(1, 1, 1, 100))) #TODO QBrush(Qt.transparent)로 바꿔주기
+        # painter.fillRect(event.rect(), QBrush(QColor(1, 1, 1, 100))) #TODO QBrush(Qt.transparent)로 바꿔주기
 
         painter.setBrush(QColor(255, 229, 204, 100))  # 채우기 색깔
         painter.setPen(QPen(QColor(255, 128, 0), 3))  # 선 색깔
@@ -349,6 +371,7 @@ class BoxModel:
     def __init__(self, parsed_data):
         super().__init__()
         self.data = parsed_data
+        self.selectedDataIndex = None
         # string, orientation, xmin, ymin, xmax, ymax, visible
 
     #     self.row = self.data.shape[0]
@@ -357,19 +380,32 @@ class BoxModel:
     #     self.model = QStandardItemModel()
     #     for i in range(self.col):
     #         self.model.appendRow(self.data[:, i])
+
+    def setLayerSignal(self, notify_selected_to_layer):
+        self.notify_selected_to_layer = notify_selected_to_layer
+
+    def setTableSignal(self, notify_selected_to_table):
+        self.notify_selected_to_table = notify_selected_to_table
+
+
+
     #
+    def setSelectedDataIndex(self, index):
+        self.selectedDataIndex = index
+        self.notify_selected_to_table(self.selectedDataIndex)
+
     def getBoxData(self):
         return self.data
 
     def setBoxData(self, row, newData):
         self.data[row] = newData
         test = self.data[row]
+        # TODO: LayerViewModel에 notify
 
 
 class BoxViewModel:
     def __init__(self, data_model, parent=None):
         super().__init__()
-
 
         # xml 원본 데이터로 초기화
         self.model = data_model
@@ -390,4 +426,3 @@ class BoxViewModel:
 
     def updateBoxData(self, i, newData):
         self.model.setBoxData(i, newData)
-
