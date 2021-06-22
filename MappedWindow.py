@@ -198,9 +198,10 @@ class TableView(QTableWidget):
 
         ''' signal to connect with ViewModel '''  # View Model에서 사용
 
-    def setSignal(self, on_data_changed_from_view, get_data_func):
+    def setSignal(self, on_data_changed_from_view, get_data_func, notify_selected_index):
         self.on_data_changed = on_data_changed_from_view
         self.get_data = get_data_func
+        self.on_selected = notify_selected_index
 
 
     # def itemChanged(self, item): # connect 할 거면 쓰면 안 됨
@@ -265,6 +266,7 @@ class TableView(QTableWidget):
         clicked_row = (self.selectedIndexes())[0].row()
         print(clicked_row, 'clicked')  # Test
         print(self.getTableCell(clicked_row))  # Test
+        self.on_selected(clicked_row)
 
     def cell_edit(self):
         if self.IsInitialized:
@@ -302,8 +304,8 @@ class TableViewModel:
         # 처음엔 원본xml로 초기화 (뷰)
         self.Test = False
         self.tableView = view
-        self.tableView.setSignal(on_data_changed_from_view=self.getChagedDataFromView, get_data_func=self.getBoxData)
-        self.model.setTableSignal(notify_selected_to_table=self.selectedFromLayer)
+        self.tableView.setSignal(on_data_changed_from_view=self.getChagedDataFromView, get_data_func=self.getBoxData, notify_selected_index=self.notify_selected_index)
+        self.model.setTableSignal(notify_selected_to_table=self.get_selected_index)
         self.tableView.setInitData()
         self.tableView.IsInitialized = True
 
@@ -320,9 +322,12 @@ class TableViewModel:
     def updateBoxData(self, i, newData):
         self.model.setBoxData(i, newData)
 
-    def selectedFromLayer(self,i):
+    def get_selected_index(self, i):
         self.selectedIndex = i
         self.tableView.selectionChange(self.selectedIndex)
+
+    def notify_selected_index(self, i):
+        self.model.setSelectedDataIndex(i, 1)
 
 
 # view
@@ -389,10 +394,13 @@ class BoxModel:
 
 
 
-    #
-    def setSelectedDataIndex(self, index):
+    def setSelectedDataIndex(self, index, flag): #flag = 0 : to table/ 1: to layer
         self.selectedDataIndex = index
-        self.notify_selected_to_table(self.selectedDataIndex)
+        if flag == 0:
+            self.notify_selected_to_table(self.selectedDataIndex)
+        elif flag == 1:
+            self.notify_selected_to_layer(self.selectedDataIndex)
+
 
     def getBoxData(self):
         return self.data
