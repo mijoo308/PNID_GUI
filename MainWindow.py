@@ -3,11 +3,12 @@ import sys
 from PyQt5.QtWidgets import *
 
 from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import QRect
 
 from MappedWindow import *
 from ImgView import *
 from ImgListView import *
-
+import editMap
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -26,7 +27,8 @@ class MainWindow(QMainWindow):
         self.createToolBar()
 
         # self.createImgListDock() # Dock 없어도 될 것 같음
-        self.createImgViewer()
+        #self.createImgViewer()
+        self.exceptFieldActive = False
 
         self.show()
 
@@ -87,10 +89,15 @@ class MainWindow(QMainWindow):
     def exceptFieldMessageBox(self):
         QMessageBox.information(self, "Information", '알림\n\n최대한 표제 영역만을 선택해주십시오.\n(우클릭으로 선택)',
                                 QMessageBox.Ok, QMessageBox.Ok)
+        self.exceptFieldActive = True
 
     def mapFieldMessageBox(self):
         QMessageBox.information(self, 'Information', '알림\n\n최대한 도면 영역만을 선택해주십시오.\n(우클릭으로 선택)',
                                 QMessageBox.Ok, QMessageBox.Ok)
+
+    def exceptFieldConfirm(self):
+        self.reply = QMessageBox.information(self, 'Information', '해당 포인트로 저장하시겠습니까',
+                                QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
 
     def openFileDialog(self):
         self.dialog = QDialog()
@@ -143,7 +150,8 @@ class MainWindow(QMainWindow):
 
     def btnClick(self):
         # imgView = ImgView()
-        self.ScrollableImgArea.uploadImg(resize_ratio=0.2, filePath=self.imgFilePath[0])
+        # self.ScrollableImgArea.uploadImg(resize_ratio=0.2, filePath=self.imgFilePath[0])
+        self.createImgViewer()
         self.dialog.close()
         self.callMappedArea()  # 테스트 해보려구 넣은 명려문 나중에 다른 곳으로 옮겨야 함
 
@@ -161,8 +169,9 @@ class MainWindow(QMainWindow):
         self.dialog.path.append(self.xmlFilePath[0])
 
     def createImgViewer(self):
-        self.ScrollableImgArea = ImgView()
-        self.setCentralWidget(self.ScrollableImgArea)
+        #self.ScrollableImgArea = ImgView()
+        self.imgArea = editMap.graphicsView(self.imgFilePath[0])
+        self.setCentralWidget(self.imgArea)
 
     def createImgListDock(self):
         self.dockingWidget = QDockWidget("도면 목록")  # 타이틀 설정
@@ -172,4 +181,30 @@ class MainWindow(QMainWindow):
         self.dockingWidget.setFloating(False)  # ? False했는데도 움직여짐,,
 
         self.addDockWidget(Qt.LeftDockWidgetArea, self.dockingWidget)
+
+    '''def mousePressEvent (self, eventQMouseEvent):
+        if self.exceptFieldActive:
+            self.originQPoint = eventQMouseEvent.pos()
+            self.currentQRubberBand = QRubberBand(QRubberBand.Rectangle, self)
+            self.currentQRubberBand.show()
+
+    def mouseMoveEvent (self, eventQMouseEvent):
+        if self.exceptFieldActive:
+            self.currentQRubberBand.setGeometry(QRect(self.originQPoint, eventQMouseEvent.pos()).normalized())
+
+    def mouseReleaseEvent (self, eventQMouseEvent):
+        if self.exceptFieldActive:
+            self.exceptFieldConfirm()
+            if self.reply == QMessageBox.Yes:
+                self.currentQRubberBand.hide()
+                self.exceptFieldActive = False
+                self.currentQRect = self.currentQRubberBand.geometry()
+                self.cropImage()
+            else:
+                self.currentQRubberBand.hide()
+            self.currentQRubberBand.deleteLater()'''
+
+
+
+
 
