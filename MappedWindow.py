@@ -130,6 +130,7 @@ class MappedWindow(QMainWindow):
         # self.addBoxBtn.clicked.connect(self.addBtnClicked)
         # self.cellClicked.connect(self.cell_click)
         self.saveToXmlBtn.clicked.connect(self.saveToXmlBtnClicked)
+        self.deleteBoxBtn.clicked.connect(self.deleteBoxBtnClicked)
 
         ''' Dock '''
         self.layoutInDock = QVBoxLayout()
@@ -146,6 +147,9 @@ class MappedWindow(QMainWindow):
 
     def saveToXmlBtnClicked(self):
         self.tab1_table.saveXML(self.IMG_NAME)
+
+    def deleteBoxBtnClicked(self):
+        self.tab1_table.delete_cell() # layerView에서 박스 삭제 필요
 
     def tabView(self):
         self.tabview = QWidget()
@@ -192,16 +196,17 @@ class TableView(QTableWidget):
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.IsInitialized = False  # itemChanged 때문에
         self.cellClicked.connect(self.cell_click)  # cellClick 이벤트를 감지하면 cell_click 함수를 실행
-        self.itemChanged.connect(self.cell_edit)
+        self.itemChanged.connect(self.edit_cell)
 
         # TODO: checkbox event 설정 필요
 
         ''' signal to connect with ViewModel '''  # View Model에서 사용
 
-    def setSignal(self, on_data_changed_from_view, get_data_func, notify_selected_index):
+    def setSignal(self, on_data_changed_from_view, get_data_func, notify_selected_index, notify_deleted_index):
         self.on_data_changed = on_data_changed_from_view
         self.get_data = get_data_func
         self.on_selected = notify_selected_index
+        self.on_deleted = notify_deleted_index
 
 
     # def itemChanged(self, item): # connect 할 거면 쓰면 안 됨
@@ -268,7 +273,7 @@ class TableView(QTableWidget):
         print(self.getTableCell(clicked_row))  # Test
         self.on_selected(clicked_row)
 
-    def cell_edit(self):
+    def edit_cell(self):
         if self.IsInitialized:
             edited_row = (self.selectedIndexes())[0].row()
             edited_cell = self.getTableCell(edited_row)
@@ -282,10 +287,15 @@ class TableView(QTableWidget):
             print(edited_row, 'changed')  # Test
             self.on_data_changed(edited_row, edited_cell)
 
+    def delete_cell(self):
+        deleted_index = self.selectedIndexes()[0].row()
+        self.removeRow(deleted_index)
+        self.on_deleted(deleted_index)
+
     def saveXML(self, filename):
         makeXML(self.get_data(), filename)
 
-    def selectionChange(self,i): # ViewModel에서 사용
+    def selectionChange(self, i): # ViewModel에서 사용
         self.setCurrentCell(i, 1)
 
 
@@ -304,7 +314,8 @@ class TableViewModel:
         # 처음엔 원본xml로 초기화 (뷰)
         self.Test = False
         self.tableView = view
-        self.tableView.setSignal(on_data_changed_from_view=self.getChagedDataFromView, get_data_func=self.getBoxData, notify_selected_index=self.notify_selected_index)
+        self.tableView.setSignal(on_data_changed_from_view=self.getChagedDataFromView, get_data_func=self.getBoxData,
+                                 notify_selected_index=self.notify_selected_index, notify_deleted_index=self.notify_deleted_index)
         self.model.setTableSignal(notify_selected_to_table=self.get_selected_index)
         self.tableView.setInitData()
         self.tableView.IsInitialized = True
@@ -328,6 +339,9 @@ class TableViewModel:
 
     def notify_selected_index(self, i):
         self.model.setSelectedDataIndex(i, 1)
+
+    def notify_deleted_index(self, i):
+        self.model.deleteBox(i)
 
 
 # view
@@ -386,13 +400,16 @@ class BoxModel:
     #     for i in range(self.col):
     #         self.model.appendRow(self.data[:, i])
 
-    def setLayerSignal(self, notify_selected_to_layer):
+    def setLayerSignal(self, notify_selected_to_layer, notify_deleted_to_layer):
         self.notify_selected_to_layer = notify_selected_to_layer
+        self.notify_deleted_to_layer = notify_deleted_to_layer
 
     def setTableSignal(self, notify_selected_to_table):
         self.notify_selected_to_table = notify_selected_to_table
 
-
+    def deleteBox(self, i):
+        self.data = np.delete(self.data, i, 0)
+        self.notify_deleted_to_layer(i)
 
     def setSelectedDataIndex(self, index, flag): #flag = 0 : to table/ 1: to layer
         self.selectedDataIndex = index
@@ -407,7 +424,6 @@ class BoxModel:
 
     def setBoxData(self, row, newData):
         self.data[row] = newData
-        test = self.data[row]
         # TODO: LayerViewModel에 notify
 
 

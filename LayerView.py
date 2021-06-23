@@ -25,7 +25,7 @@ class LayerView(QGraphicsView):
         self.currentItem = None
 
         self.DEFAULT_COLOR = QColor(255, 0, 0, 50)
-        self.SELECTED_COLOR = QColor(255, 255, 0, 50)
+        self.SELECTED_COLOR = QColor(0, 0, 255, 50)
 
     def setSignal(self, on_data_changed_func, get_data_func, notify_selected_index):
         self.on_data_changed = on_data_changed_func
@@ -57,6 +57,10 @@ class LayerView(QGraphicsView):
         self.changeSelctedItemColor(current_item)
         # test = current_item.scenePos()
         # self.centerOn(current_item.pos())
+
+    def on_deleted(self, i):
+        self.scene.removeItem(self.bndboxList[i])
+        del self.bndboxList[i]
 
     def changeSelctedItemColor(self, item):
         if self.currentItem is not None:
@@ -162,7 +166,7 @@ class LayerViewModel:
 
         # 모델 객체 이용 (모델)
         self.model = data_model
-        self.model.setLayerSignal(notify_selected_to_layer=self.get_selected_index)
+        self.model.setLayerSignal(notify_selected_to_layer=self.get_selected_index, notify_deleted_to_layer=self.get_deleted_index)
         # self.data = self.model.getData()
         # self.boxModel = BoxModel(self.data)
 
@@ -191,6 +195,10 @@ class LayerViewModel:
     def get_selected_index(self, i):
         self.selectedIndex = i
         self.layerView.selectionChange(self.selectedIndex)
+
+    def get_deleted_index(self, i):
+        self.deletedIndex = i
+        self.layerView.on_deleted(self.deletedIndex)
 
 
 
