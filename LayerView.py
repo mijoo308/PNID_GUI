@@ -93,6 +93,22 @@ class LayerView(QGraphicsView):
         delta = newPos - oldPos
         self.translate(delta.x(), delta.y())
 
+    def redraw_box(self, i, new_row): # ?
+        self.scene.removeItem(self.bndboxList[i])
+        self.bndboxList[i].setBrush(self.DEFAULT_COLOR)
+        self.bndboxList[i].setFlag(QGraphicsItem.ItemIsSelectable, True)
+        self.bndboxList[i].setFlag(QGraphicsItem.ItemIsMovable, True)
+        self.bndboxList[i].setFlag(QGraphicsItem.ItemIsFocusable, True)
+        self.scene.addItem(self.bndboxList[i])
+        xmin = int(new_row[2])  # TODO: table에 보낼 때 int->string
+        ymin = int(new_row[3])
+        width = int(new_row[4]) - xmin
+        height = int(new_row[5]) - ymin
+        r = QRectF(xmin, ymin, width, height)
+        self.bndboxList[i].setRect(r)
+
+
+
 
 
 class GraphicsScene(QGraphicsScene):
@@ -191,7 +207,7 @@ class LayerViewModel:
 
         # 모델 객체 이용 (모델)
         self.model = data_model
-        self.model.setLayerSignal(notify_selected_to_layer=self.get_selected_index, notify_deleted_to_layer=self.get_deleted_index)
+        self.model.setLayerSignal(notify_selected_to_layer=self.get_selected_index, notify_deleted_to_layer=self.get_deleted_index, notify_edited_to_layer=self._redraw_box)
         # self.data = self.model.getData()
         # self.boxModel = BoxModel(self.data)
 
@@ -225,7 +241,8 @@ class LayerViewModel:
         self.deletedIndex = i
         self.layerView.on_deleted(self.deletedIndex)
 
-
+    def _redraw_box(self, i, newRow):
+        self.layerView.redraw_box(i, newRow)
 
 
     # def draw_rect(self):

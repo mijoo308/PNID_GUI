@@ -193,7 +193,7 @@ class TableView(QTableWidget):
     def __init__(self):
         super().__init__()
         self.data = None
-        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.setSelectionBehavior(QAbstractItemView.SelectItems) # column값 필요해서 items로 바꿈
         self.IsInitialized = False  # itemChanged 때문에
         self.cellClicked.connect(self.cell_click)  # cellClick 이벤트를 감지하면 cell_click 함수를 실행
         self.itemChanged.connect(self.edit_cell)
@@ -203,7 +203,7 @@ class TableView(QTableWidget):
         ''' signal to connect with ViewModel '''  # View Model에서 사용
 
     def setSignal(self, on_data_changed_from_view, get_data_func, notify_selected_index, notify_deleted_index):
-        self.on_data_changed = on_data_changed_from_view
+        self.on_data_changed_from_view = on_data_changed_from_view
         self.get_data = get_data_func
         self.on_selected = notify_selected_index
         self.on_deleted = notify_deleted_index
@@ -252,17 +252,21 @@ class TableView(QTableWidget):
     #     self.logLabel(value)
 
     def setTableCell(self, newData, i):
-        self.setItem(i, 1, QTableWidgetItem(self.newData[i][6]))
-        self.setItem(i, 2, QTableWidgetItem(self.newData[i][0]))
-        self.setItem(i, 3, QTableWidgetItem(self.newData[i][2]))
-        self.setItem(i, 4, QTableWidgetItem(self.newData[i][3]))
-        self.setItem(i, 5, QTableWidgetItem(self.newData[i][4]))
-        self.setItem(i, 6, QTableWidgetItem(self.newData[i][5]))
-        self.setItem(i, 7, QTableWidgetItem(self.newData[i][1]))
+        self.setItem(i, 1, QTableWidgetItem(newData[i][6]))
+        self.setItem(i, 2, QTableWidgetItem(newData[i][0]))
+        self.setItem(i, 3, QTableWidgetItem(newData[i][2]))
+        self.setItem(i, 4, QTableWidgetItem(newData[i][3]))
+        self.setItem(i, 5, QTableWidgetItem(newData[i][4]))
+        self.setItem(i, 6, QTableWidgetItem(newData[i][5]))
+        self.setItem(i, 7, QTableWidgetItem(newData[i][1]))
 
-    def getTableCell(self, i):
+    def getTableCell(self, i, j=None):
         result = []
-        for j in range(1, self.columnCount()):
+        if j is None:
+            for col in range(1, self.columnCount()):
+                result.append(self.item(i, col).text())
+
+        else:
             result.append(self.item(i, j).text())
 
         return result
@@ -275,17 +279,22 @@ class TableView(QTableWidget):
 
     def edit_cell(self):
         if self.IsInitialized:
-            edited_row = (self.selectedIndexes())[0].row()
-            edited_cell = self.getTableCell(edited_row)
+            edited_row_index = self.selectedIndexes()[0].row()
+            edited_col_index = self.selectedIndexes()[0].column() # 필요없을 수도
+            edited_row = self.getTableCell(edited_row_index)
 
-            if self.checkBoxList[edited_row].isChecked():
-                edited_cell.append(1)  # TODO: bool 타입으로 저장이 안되는 것 수정 필요
+            if self.checkBoxList[edited_row_index].isChecked():
+                edited_row.append(1)  # TODO: bool 타입으로 저장이 안되는 것 수정 필요
             else:
-                edited_cell.append(0)
+                edited_row.append(0)
 
-            edited_cell = np.array(edited_cell)  # list type -> np
-            print(edited_row, 'changed')  # Test
-            self.on_data_changed(edited_row, edited_cell)
+            edited_row = np.array(edited_row)  # list type -> np
+            print(edited_row_index, 'changed')  # Test
+            self.on_data_changed_from_view(edited_row_index, edited_row)  # row 단위로 업데이트
+
+
+
+
 
     def delete_cell(self):
         deleted_index = self.selectedIndexes()[0].row()
@@ -400,9 +409,10 @@ class BoxModel:
     #     for i in range(self.col):
     #         self.model.appendRow(self.data[:, i])
 
-    def setLayerSignal(self, notify_selected_to_layer, notify_deleted_to_layer):
+    def setLayerSignal(self, notify_selected_to_layer, notify_deleted_to_layer, notify_edited_to_layer):
         self.notify_selected_to_layer = notify_selected_to_layer
         self.notify_deleted_to_layer = notify_deleted_to_layer
+        self.notify_edited_to_layer = notify_edited_to_layer
 
     def setTableSignal(self, notify_selected_to_table):
         self.notify_selected_to_table = notify_selected_to_table
@@ -422,9 +432,18 @@ class BoxModel:
     def getBoxData(self):
         return self.data
 
-    def setBoxData(self, row, newData):
-        self.data[row] = newData
-        # TODO: LayerViewModel에 notify
+    def setBoxData(self, i, new_data):
+        what = self.data
+        prev_data = self.data[i].copy()
+        self.data[i] = new_data
+
+        bndbox_ischanged = False
+        for bndbox_idx in range(2, 6): # box 좌표가 바뀌었으면
+            if prev_data[bndbox_idx] != new_data[bndbox_idx]:
+                bndbox_ischanged = True
+                break
+        if bndbox_ischanged:
+            self.notify_edited_to_layer(i, new_data)
 
 
 class BoxViewModel:
@@ -443,7 +462,7 @@ class BoxViewModel:
         self.updateBoxData(row, value)
 
         print(row, value, "is changed")
-        # box 그리는 것도 추가해야함
+        # box 그리는 것도 추가해야함 model -> layer view
 
     def getBoxData(self):
         return self.model.getBoxData()
