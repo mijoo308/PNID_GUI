@@ -68,6 +68,31 @@ class LayerView(QGraphicsView):
         self.currentItem = item
         self.currentItem.setBrush(self.SELECTED_COLOR)
 
+    def wheelEvent(self, event):
+        zoomInFactor = 1.25
+        zoomOutFactor = 1 / zoomInFactor
+
+        # Set Anchors
+        self.setTransformationAnchor(self.NoAnchor)
+        self.setResizeAnchor(self.NoAnchor)
+
+        # Save the scene pos
+        oldPos = self.mapToScene(event.pos())
+
+        # Zoom
+        if event.angleDelta().y() > 0:
+            zoomFactor = zoomInFactor
+        else:
+            zoomFactor = zoomOutFactor
+        self.scale(zoomFactor, zoomFactor)
+
+        # Get the new position
+        newPos = self.mapToScene(event.pos())
+
+        # Move scene to old position
+        delta = newPos - oldPos
+        self.translate(delta.x(), delta.y())
+
 
 
 class GraphicsScene(QGraphicsScene):
