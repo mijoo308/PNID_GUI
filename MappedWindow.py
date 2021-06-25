@@ -20,7 +20,6 @@ class MappedWindow(QMainWindow):
         self.scaleFactor = 0.0
 
         self.IMG_NAME = os.path.basename(img).split('.')[0]
-
         self.IMG_PATH = img
         self.XML_PATH = xml
         self.XML_RESULT = parseXML(self.XML_PATH, xml_type='res')
@@ -59,9 +58,6 @@ class MappedWindow(QMainWindow):
         # self.setCentralWidget(self.mapWidget)
         self.layerView = LayerView(self.IMG_PATH)
         self.layerViewModel = LayerViewModel(self.MODEL, self.layerView)  # 원본 데이터 채워져 있을 것
-        # self.scene = GraphicsScene()
-        # self.scene.set_image(self.IMG_PATH)
-        # self.layerView.setScene(self.scene)
         self.setCentralWidget(self.layerView)
         self.show()
 
@@ -124,6 +120,7 @@ class MappedWindow(QMainWindow):
         self.addBoxBtn.setCheckable(True)
         self.deleteBoxBtn = QPushButton('Delete Box')
         self.saveToXmlBtn = QPushButton('Save to XML')
+        self.IsAdding = False
         self.layoutForButton.addWidget(self.addBoxBtn)
         self.layoutForButton.addWidget(self.deleteBoxBtn)
         self.layoutForButton.addWidget(self.saveToXmlBtn)
@@ -156,9 +153,17 @@ class MappedWindow(QMainWindow):
     def addBoxBtnClicked(self):
         if self.addBoxBtn.isChecked():
             self.addBoxBtn.setStyleSheet("background-color : lightblue")
+            self.IsAdding = True
+            self.deleteBoxBtn.setEnabled(False)
+            self.saveToXmlBtn.setEnabled(False)
+            self.layerView.activateDrawBoxMode()
 
         else:
             self.addBoxBtn.setStyleSheet('background-color: None')
+            self.IsAdding = False
+            self.deleteBoxBtn.setEnabled(True)
+            self.saveToXmlBtn.setEnabled(True)
+            self.layerView.deactivateDrawBoxMode()
 
     def tabView(self):
         self.tabview = QWidget()
@@ -206,7 +211,7 @@ class TableView(QTableWidget):
         self.IsInitialized = False  # itemChanged 때문에
         self.cellClicked.connect(self.cell_click)  # cellClick 이벤트를 감지하면 cell_click 함수를 실행
         self.itemChanged.connect(self.edit_cell)
-        self.setStyleSheet("selection-background-color : lightblue")
+        self.setStyleSheet("selection-background-color : #c1c5ff;" "selection-color : black;")
 
         # TODO: checkbox event 설정 필요
 

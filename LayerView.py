@@ -14,9 +14,9 @@ class LayerView(QGraphicsView):
         self.scene.set_image(backgroundimg)
         self.setScene(self.scene)
 
-        # self.setDragMode(QGraphicsView.ScrollHandDrag) # RubberbandDrag -> 박스추가할 때 써도 될 듯
+        # self.setDragMode(QGraphicsView.ScrollHandDrag)
         self._mousePressed = False
-        self._isPanning = False
+        # self._isPanning = False #TODO: drag로 움직일 수 있도록 수정필요
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.bndboxList = []
@@ -39,8 +39,8 @@ class LayerView(QGraphicsView):
             box = BoundingBox(box_index)
             box.setBrush(self.DEFAULT_COLOR)
             box.setFlag(QGraphicsItem.ItemIsSelectable, True)
-            box.setFlag(QGraphicsItem.ItemIsMovable, True)
-            box.setFlag(QGraphicsItem.ItemIsFocusable, True)
+            box.setFlag(QGraphicsItem.ItemIsMovable, False)
+            # box.setFlag(QGraphicsItem.ItemIsFocusable, True)
             self.scene.addItem(box)
             xmin = int(self.data[box_index][2]) #TODO: table에 보낼 때 int->string
             ymin = int(self.data[box_index][3])
@@ -64,9 +64,15 @@ class LayerView(QGraphicsView):
 
     def changeSelctedItemColor(self, item):
         if self.currentItem is not None:
-            self.currentItem.setBrush(self.DEFAULT_COLOR)
+            self.currentItem.setBrush(self.DEFAULT_COLOR) # TODO: 이전색깔로 돌아가도록 해야함 (newBox)
         self.currentItem = item
         self.currentItem.setBrush(self.SELECTED_COLOR)
+
+    def activateDrawBoxMode(self):
+        self.scene.isAdding = True
+
+    def deactivateDrawBoxMode(self):
+        self.scene.isAdding = False
 
     def wheelEvent(self, event):
         zoomInFactor = 1.25
@@ -97,7 +103,7 @@ class LayerView(QGraphicsView):
         self.scene.removeItem(self.bndboxList[i])
         self.bndboxList[i].setBrush(self.DEFAULT_COLOR)
         self.bndboxList[i].setFlag(QGraphicsItem.ItemIsSelectable, True)
-        self.bndboxList[i].setFlag(QGraphicsItem.ItemIsMovable, True)
+        self.bndboxList[i].setFlag(QGraphicsItem.ItemIsMovable, False)
         self.bndboxList[i].setFlag(QGraphicsItem.ItemIsFocusable, True)
         self.scene.addItem(self.bndboxList[i])
         xmin = int(new_row[2])  # TODO: table에 보낼 때 int->string
@@ -109,8 +115,6 @@ class LayerView(QGraphicsView):
 
 
 
-
-
 class GraphicsScene(QGraphicsScene):
     def __init__(self):
         super().__init__()
@@ -118,12 +122,14 @@ class GraphicsScene(QGraphicsScene):
         self.backImg = ''
         self._start = QPointF()
         self._current_rect_item = None
-        self.isDragging = False
+        # self.isDragging = False
+        self.isExistingBox = None
         self.selectedItem = None
+        self.isAdding = False
 
         self.on_selected = None # from viewModel
 
-        self.NEWBOX_COLOR = QColor(0, 0, 200, 50)
+        self.NEWBOX_COLOR = QColor(0, 200, 0, 50)
 
     def set_image(self, img_path):
         self.backImg = QPixmap(img_path)
@@ -147,46 +153,39 @@ class GraphicsScene(QGraphicsScene):
     #     self._current_rect_item.setRect(r)
 
 
-
+    # TODO: 이벤트 정리 필요 (박스 이동시키는 기능 삭제 필요)
     def mousePressEvent(self, event):
         print('pressed')
         print(type(self.itemAt(event.scenePos(), QTransform())))
-        if not (isinstance(self.itemAt(event.scenePos(), QTransform()), QGraphicsRectItem)): # 새로운 박스 추가
+        self.isExistingBox = isinstance(self.itemAt(event.scenePos(), QTransform()), QGraphicsRectItem)
+
+        if self.isExistingBox: # 존재하는 박스 클릭 시
+            self.selectedItem = self.itemAt(event.scenePos(), QTransform())
+            self.on_selected(self.selectedItem.tableIndex)
+            # QGraphicsItem.mousePressEvent(self.selectedItem, event)
+
+        elif self.isAdding:  # addBtn이 눌려있고 빈 공간일 때 새로운 박스 추가
             self._current_rect_item = QGraphicsRectItem()
             self._current_rect_item.setBrush(self.NEWBOX_COLOR)
             self._current_rect_item.setFlag(QGraphicsItem.ItemIsSelectable, True)
-            self._current_rect_item.setFlag(QGraphicsItem.ItemIsMovable, True)
+            # self._current_rect_item.setFlag(QGraphicsItem.ItemIsMovable, True)
             # self._current_rect_item.setFlag(QGraphicsItem.ItemIsFocusable, True) # ?
             # self._current_rect_item.paint(QColor(0, 0, 255, 127))
             self.addItem(self._current_rect_item)
             self._start = event.scenePos()
             r = QRectF(self._start, self._start)
             self._current_rect_item.setRect(r)
-        else:                                                                               # 박스 움직임
-            self.isDragging = True
-            self.selectedItem = self.itemAt(event.scenePos(), QTransform())
-            print(self.selectedItem.tableIndex) # TODO: 새로만든 박스 table에 추가 필요 (box생성 enable버튼도 필요)
-            self.on_selected(self.selectedItem.tableIndex)
-            QGraphicsItem.mousePressEvent(self.selectedItem, event)
+
 
     def mouseMoveEvent(self, event):
-        if self.isDragging:
-            QGraphicsItem.mouseMoveEvent(self.selectedItem, event)
-
-        elif self._current_rect_item is not None:
+        if not self.isExistingBox and self._current_rect_item is not None:
             r = QRectF(self._start, event.scenePos()).normalized()
             self._current_rect_item.setRect(r)
 
-        # self.mouseMoveEvent(event)
-
     def mouseReleaseEvent(self, event):
-        if self.isDragging:
-            QGraphicsItem.mouseReleaseEvent(self.selectedItem, event)
-            self.isDragging = False
-
-        else:
+        if not self.isExistingBox and self._current_rect_item is not None:
             self._current_rect_item = None
-        # self.mouseReleaseEvent(event)
+            # TODO: 여기에서 bndbox 좌표를 넘겨서 model에 추가해야함
 
 
 class BoundingBox(QGraphicsRectItem):
