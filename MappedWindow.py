@@ -121,6 +121,7 @@ class MappedWindow(QMainWindow):
 
         ''' Top Button '''
         self.addBoxBtn = QPushButton('Add Box')
+        self.addBoxBtn.setCheckable(True)
         self.deleteBoxBtn = QPushButton('Delete Box')
         self.saveToXmlBtn = QPushButton('Save to XML')
         self.layoutForButton.addWidget(self.addBoxBtn)
@@ -131,6 +132,7 @@ class MappedWindow(QMainWindow):
         # self.cellClicked.connect(self.cell_click)
         self.saveToXmlBtn.clicked.connect(self.saveToXmlBtnClicked)
         self.deleteBoxBtn.clicked.connect(self.deleteBoxBtnClicked)
+        self.addBoxBtn.clicked.connect(self.addBoxBtnClicked)
 
         ''' Dock '''
         self.layoutInDock = QVBoxLayout()
@@ -150,6 +152,13 @@ class MappedWindow(QMainWindow):
 
     def deleteBoxBtnClicked(self):
         self.tab1_table.delete_cell() # layerView에서 박스 삭제 필요
+
+    def addBoxBtnClicked(self):
+        if self.addBoxBtn.isChecked():
+            self.addBoxBtn.setStyleSheet("background-color : lightblue")
+
+        else:
+            self.addBoxBtn.setStyleSheet('background-color: None')
 
     def tabView(self):
         self.tabview = QWidget()
