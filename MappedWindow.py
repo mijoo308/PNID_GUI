@@ -206,6 +206,7 @@ class TableView(QTableWidget):
         self.IsInitialized = False  # itemChanged 때문에
         self.cellClicked.connect(self.cell_click)  # cellClick 이벤트를 감지하면 cell_click 함수를 실행
         self.itemChanged.connect(self.edit_cell)
+        self.setStyleSheet("selection-background-color : lightblue")
 
         # TODO: checkbox event 설정 필요
 
@@ -301,10 +302,6 @@ class TableView(QTableWidget):
             print(edited_row_index, 'changed')  # Test
             self.on_data_changed_from_view(edited_row_index, edited_row)  # row 단위로 업데이트
 
-
-
-
-
     def delete_cell(self):
         deleted_index = self.selectedIndexes()[0].row()
         self.removeRow(deleted_index)
@@ -313,8 +310,8 @@ class TableView(QTableWidget):
     def saveXML(self, filename):
         makeXML(self.get_data(), filename)
 
-    def selectionChange(self, i): # ViewModel에서 사용
-        self.setCurrentCell(i, 1)
+    def selectionChange(self, i):  # ViewModel에서 사용
+        self.setCurrentCell(i, 2)
 
 
 
