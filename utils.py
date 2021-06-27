@@ -83,9 +83,9 @@ def parseXML(xml_path, xml_type):
     for child in root.findall(object):
         visible = True
         string, orientation, xmin, ymin, xmax, ymax, type = object_to_element(child, xml_type)
-        result.append([type, string, xmin, ymin, xmax, ymax, orientation, visible])  # add Visible
+        result.append([type, string, int(xmin), int(ymin), int(xmax), int(ymax), orientation, visible])  # add Visible
 
-    result = np.array(result)  # np array 로 변환
+    # result = np.array(result)  # np array 로 변환 # np제거
 
     return result
 

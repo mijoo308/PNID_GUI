@@ -148,7 +148,7 @@ class MappedWindow(QMainWindow):
         self.tab1_table.saveXML(self.IMG_NAME)
 
     def deleteBoxBtnClicked(self):
-        self.tab1_table.delete_cell() # layerView에서 박스 삭제 필요
+        self.tab1_table.delete_cell()  # layerView에서 박스 삭제 필요
 
     def addBoxBtnClicked(self):
         if self.addBoxBtn.isChecked():
@@ -207,7 +207,7 @@ class TableView(QTableWidget):
     def __init__(self):
         super().__init__()
         self.data = None
-        self.setSelectionBehavior(QAbstractItemView.SelectItems) # column값 필요해서 items로 바꿈
+        self.setSelectionBehavior(QAbstractItemView.SelectItems)  # column값 필요해서 items로 바꿈
         self.IsInitialized = False  # itemChanged 때문에
         self.cellClicked.connect(self.cell_click)  # cellClick 이벤트를 감지하면 cell_click 함수를 실행
         self.itemChanged.connect(self.edit_cell)
@@ -223,7 +223,6 @@ class TableView(QTableWidget):
         self.on_selected = notify_selected_index
         self.on_deleted = notify_deleted_index
 
-
     # def itemChanged(self, item): # connect 할 거면 쓰면 안 됨
     #     self.chaged_row = item.row()
     #     self.changed_col= item.column()
@@ -232,7 +231,7 @@ class TableView(QTableWidget):
 
     def setInitData(self):
         self.data = self.get_data()
-        table_size = self.data.shape[0]
+        table_size = len(self.data)
         self.setRowCount(table_size)
         self.setColumnCount(8)
         self.setHorizontalHeaderLabels(
@@ -249,12 +248,12 @@ class TableView(QTableWidget):
 
             # 순서: type, string, xmin, ymin, xmax, ymax, orientation, visible
             self.setItem(i, 1, QTableWidgetItem(self.data[i][0]))
-            self.setItem(i, 2, QTableWidgetItem(self.data[i][1]))
-            self.setItem(i, 3, QTableWidgetItem(self.data[i][2]))
-            self.setItem(i, 4, QTableWidgetItem(self.data[i][3]))
-            self.setItem(i, 5, QTableWidgetItem(self.data[i][4]))
-            self.setItem(i, 6, QTableWidgetItem(self.data[i][5]))
-            self.setItem(i, 7, QTableWidgetItem(self.data[i][6]))
+            self.setItem(i, 2, QTableWidgetItem(str(self.data[i][1])))
+            self.setItem(i, 3, QTableWidgetItem(str(self.data[i][2])))
+            self.setItem(i, 4, QTableWidgetItem(str(self.data[i][3])))
+            self.setItem(i, 5, QTableWidgetItem(str(self.data[i][4])))
+            self.setItem(i, 6, QTableWidgetItem(str(self.data[i][5])))
+            self.setItem(i, 7, QTableWidgetItem(str(self.data[i][6])))
 
         for i in range(8):
             if i == 2:
@@ -266,14 +265,28 @@ class TableView(QTableWidget):
     #     self.printLabel(value)
     #     self.logLabel(value)
 
+
     def setTableCell(self, newData, i):
-        self.setItem(i, 1, QTableWidgetItem(newData[i][6]))
-        self.setItem(i, 2, QTableWidgetItem(newData[i][0]))
-        self.setItem(i, 3, QTableWidgetItem(newData[i][2]))
-        self.setItem(i, 4, QTableWidgetItem(newData[i][3]))
-        self.setItem(i, 5, QTableWidgetItem(newData[i][4]))
-        self.setItem(i, 6, QTableWidgetItem(newData[i][5]))
-        self.setItem(i, 7, QTableWidgetItem(newData[i][1]))
+        self.setCellWidget(i, 0, self.checkBoxList[i])
+        self.checkBoxList[i].setChecked(True)
+        self.setItem(i, 1, QTableWidgetItem(newData[0]))
+        self.setItem(i, 2, QTableWidgetItem(str(newData[1])))
+        self.setItem(i, 3, QTableWidgetItem(str(newData[2])))
+        self.setItem(i, 4, QTableWidgetItem(str(newData[3])))
+        self.setItem(i, 5, QTableWidgetItem(str(newData[4])))
+        self.setItem(i, 6, QTableWidgetItem(str(newData[5])))
+        self.setItem(i, 7, QTableWidgetItem(str(newData[6])))
+
+    def addTableCell(self, addedData):
+        row = self.rowCount()
+        self.insertRow(row)
+
+        test = self.rowCount()
+
+        ckbox = QCheckBox()
+        self.checkBoxList.append(ckbox)
+        self.setTableCell(addedData, row)
+        self.selectRow(row)
 
     def getTableCell(self, i, j=None):
         result = []
@@ -294,18 +307,18 @@ class TableView(QTableWidget):
 
     def edit_cell(self):
         if self.IsInitialized:
-            edited_row_index = self.selectedIndexes()[0].row()
-            edited_col_index = self.selectedIndexes()[0].column() # 필요없을 수도
-            edited_row = self.getTableCell(edited_row_index)
+            if self.selectedIndexes():
+                edited_row_index = self.selectedIndexes()[0].row()
+                edited_row = self.getTableCell(edited_row_index)
 
-            if self.checkBoxList[edited_row_index].isChecked():
-                edited_row.append(1)  # TODO: bool 타입으로 저장이 안되는 것 수정 필요
-            else:
-                edited_row.append(0)
+                if self.checkBoxList[edited_row_index].isChecked():
+                    edited_row.append(1)  # TODO: bool 타입으로 저장이 안되는 것 수정 필요
+                else:
+                    edited_row.append(0)
 
-            edited_row = np.array(edited_row)  # list type -> np
-            print(edited_row_index, 'changed')  # Test
-            self.on_data_changed_from_view(edited_row_index, edited_row)  # row 단위로 업데이트
+                # edited_row = np.array(edited_row)  # list type -> np  np제거
+                print(edited_row_index, 'changed')  # Test
+                self.on_data_changed_from_view(edited_row_index, edited_row)  # row 단위로 업데이트
 
     def delete_cell(self):
         deleted_index = self.selectedIndexes()[0].row()
@@ -317,7 +330,6 @@ class TableView(QTableWidget):
 
     def selectionChange(self, i):  # ViewModel에서 사용
         self.setCurrentCell(i, 2)
-
 
 
 # ViewModel
@@ -335,11 +347,12 @@ class TableViewModel:
         self.Test = False
         self.tableView = view
         self.tableView.setSignal(on_data_changed_from_view=self.getChagedDataFromView, get_data_func=self.getBoxData,
-                                 notify_selected_index=self.notify_selected_index, notify_deleted_index=self.notify_deleted_index)
-        self.model.setTableSignal(notify_selected_to_table=self.get_selected_index)
+                                 notify_selected_index=self.notify_selected_index,
+                                 notify_deleted_index=self.notify_deleted_index)
+        self.model.setTableSignal(notify_selected_to_table=self.get_selected_index,
+                                  notify_added_to_table=self.get_added_box)
         self.tableView.setInitData()
         self.tableView.IsInitialized = True
-
 
     def getChagedDataFromView(self, row, value):
         self.updateBoxData(row, value)
@@ -356,6 +369,11 @@ class TableViewModel:
     def get_selected_index(self, i):
         self.selectedIndex = i
         self.tableView.selectionChange(self.selectedIndex)
+
+    def get_added_box(self):
+        added_data = self.model.getBoxData(idx=-1).copy()
+        self.tableView.addTableCell(added_data)
+        # table view에 업데이트
 
     def notify_selected_index(self, i):
         self.model.setSelectedDataIndex(i, 1)
@@ -425,36 +443,57 @@ class BoxModel:
         self.notify_deleted_to_layer = notify_deleted_to_layer
         self.notify_edited_to_layer = notify_edited_to_layer
 
-    def setTableSignal(self, notify_selected_to_table):
+    def setTableSignal(self, notify_selected_to_table, notify_added_to_table):
         self.notify_selected_to_table = notify_selected_to_table
+        self.notify_added_to_table = notify_added_to_table
 
     def deleteBox(self, i):
-        self.data = np.delete(self.data, i, 0)
+        del self.data[i]
         self.notify_deleted_to_layer(i)
 
-    def setSelectedDataIndex(self, index, flag): #flag = 0 : to table/ 1: to layer
+    def setSelectedDataIndex(self, index, flag):  # flag = 0 : to table/ 1: to layer
         self.selectedDataIndex = index
         if flag == 0:
             self.notify_selected_to_table(self.selectedDataIndex)
         elif flag == 1:
             self.notify_selected_to_layer(self.selectedDataIndex)
 
-
-    def getBoxData(self):
-        return self.data
+    def getBoxData(self, idx=None):
+        if idx is None:
+            return self.data
+        else:
+            test1 = self.data
+            test = self.data[idx]
+            return self.data[idx]
 
     def setBoxData(self, i, new_data):
-        what = self.data
         prev_data = self.data[i].copy()
         self.data[i] = new_data
 
         bndbox_ischanged = False
-        for bndbox_idx in range(2, 6): # box 좌표가 바뀌었으면
+        for bndbox_idx in range(2, 6):  # box 좌표가 바뀌었으면
             if prev_data[bndbox_idx] != new_data[bndbox_idx]:
                 bndbox_ischanged = True
                 break
         if bndbox_ischanged:
             self.notify_edited_to_layer(i, new_data)
+
+    def addBoxData(self, new_bndbox):
+        xmin = new_bndbox[0]
+        ymin = new_bndbox[1]
+        xmax = new_bndbox[2]
+        ymax = new_bndbox[3]
+        string = ''
+        orientation = 0
+
+        if ymax - ymin > xmax - xmin: orientation = 90
+
+        new_row = ['text', string, xmin, ymin, xmax, ymax, orientation, True]
+        # test = self.data
+        # self.data = np.append(self.data, new_row, axis=1) # np제거
+        self.data.append(new_row)
+
+        self.notify_added_to_table()
 
 
 class BoxViewModel:

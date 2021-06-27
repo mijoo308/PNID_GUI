@@ -27,14 +27,15 @@ class LayerView(QGraphicsView):
         self.DEFAULT_COLOR = QColor(255, 0, 0, 50)
         self.SELECTED_COLOR = QColor(0, 0, 255, 50)
 
-    def setSignal(self, on_data_changed_func, get_data_func, notify_selected_index):
+    def setSignal(self, on_data_changed_func, get_data_func, notify_selected_index, notify_added_box):
         self.on_data_changed = on_data_changed_func
         self.get_data = get_data_func
         self.scene.on_selected = notify_selected_index
+        self.scene.on_added = notify_added_box
 
     def setInitData(self):
         self.data = self.get_data()
-        box_num = self.data.shape[0]
+        box_num = len(self.data)
         for box_index in range(box_num): # rect 객체 list 만들기
             box = BoundingBox(box_index)
             box.setBrush(self.DEFAULT_COLOR)
@@ -121,15 +122,18 @@ class GraphicsScene(QGraphicsScene):
         # self.setBackgroundBrush(QBrush(QColor(255, 255, 255, 100)))
         self.backImg = ''
         self._start = QPointF()
+        self._end = QPointF()
         self._current_rect_item = None
         # self.isDragging = False
         self.isExistingBox = None
         self.selectedItem = None
         self.isAdding = False
 
-        self.on_selected = None # from viewModel
+        self.on_selected = None # initialize from viewModel
+        self.on_added = None  # initialize from viewModel
 
         self.NEWBOX_COLOR = QColor(0, 200, 0, 50)
+
 
     def set_image(self, img_path):
         self.backImg = QPixmap(img_path)
@@ -152,10 +156,7 @@ class GraphicsScene(QGraphicsScene):
     #     r = QRectF(self._start, event.scenePos()).normalized()
     #     self._current_rect_item.setRect(r)
 
-
-    # TODO: 이벤트 정리 필요 (박스 이동시키는 기능 삭제 필요)
     def mousePressEvent(self, event):
-        print('pressed')
         print(type(self.itemAt(event.scenePos(), QTransform())))
         self.isExistingBox = isinstance(self.itemAt(event.scenePos(), QTransform()), QGraphicsRectItem)
 
@@ -176,27 +177,31 @@ class GraphicsScene(QGraphicsScene):
             r = QRectF(self._start, self._start)
             self._current_rect_item.setRect(r)
 
-
     def mouseMoveEvent(self, event):
-        if not self.isExistingBox and self._current_rect_item is not None:
+        if not self.isExistingBox and self._current_rect_item is not None: # 박스 그릴 때
             r = QRectF(self._start, event.scenePos()).normalized()
             self._current_rect_item.setRect(r)
 
     def mouseReleaseEvent(self, event):
-        if not self.isExistingBox and self._current_rect_item is not None:
-            self._current_rect_item = None
+        if not self.isExistingBox and self._current_rect_item is not None: # 박스 그릴 때
+            self._end = event.scenePos()
+            print('size: ', self._current_rect_item.sceneBoundingRect().size()) # width, height
+            print('start: ', self._start.x())   # xmin, ymin
+            print('end: ', self._end.x())       # xmax, ymax
             # TODO: 여기에서 bndbox 좌표를 넘겨서 model에 추가해야함
+
+            # initialize
+            new_bndbox = [int(self._start.x()), int(self._start.y()), int(self._end.x()), int(self._end.y())]
+            self.on_added(new_bndbox)
+            self._start = None
+            self._end = None
+            self._current_rect_item = None
 
 
 class BoundingBox(QGraphicsRectItem):
     def __init__(self, initialIndex):
         super().__init__()
         self.tableIndex = initialIndex
-        # self.xmin = None
-        # self.ymin = None
-        # self.xmax = None
-        # self.ymax = None
-
 
 
 class LayerViewModel:
@@ -212,10 +217,11 @@ class LayerViewModel:
 
         # 처음엔 원본xml로 초기화 (뷰)
         self.layerView = view
-        self.layerView.setSignal(on_data_changed_func=self.getChagedDataFromView, get_data_func=self.getBoxData, notify_selected_index=self.notify_selected_index)
+        self.layerView.setSignal(on_data_changed_func=self.getChagedDataFromView, get_data_func=self.getBoxData,
+                                 notify_selected_index=self.notify_selected_index, notify_added_box=self.notify_added_box)
         self.layerView.setInitData()
 
-        # self.model.setSelectedDataIndex(self.selectedDataIndex) # TODO:
+        # self.model.setSelectedDataIndex(self.selectedDataIndex)
 
     def getChagedDataFromView(self, row, value):
         self.updateBoxData(row, value)
@@ -231,6 +237,9 @@ class LayerViewModel:
 
     def notify_selected_index(self, i):
         self.model.setSelectedDataIndex(i, 0)
+
+    def notify_added_box(self, bndbox):
+        self.model.addBoxData(bndbox)
 
     def get_selected_index(self, i):
         self.selectedIndex = i
