@@ -28,7 +28,6 @@ class MainWindow(QMainWindow):
 
         # self.createImgListDock() # Dock 없어도 될 것 같음
         #self.createImgViewer()
-        self.exceptFieldActive = False
 
         self.show()
 
@@ -89,7 +88,7 @@ class MainWindow(QMainWindow):
     def exceptFieldMessageBox(self):
         QMessageBox.information(self, "Information", '알림\n\n최대한 표제 영역만을 선택해주십시오.\n(우클릭으로 선택)',
                                 QMessageBox.Ok, QMessageBox.Ok)
-        self.exceptFieldActive = True
+        self.imgArea.selectActivate(flag=True)
 
     def mapFieldMessageBox(self):
         QMessageBox.information(self, 'Information', '알림\n\n최대한 도면 영역만을 선택해주십시오.\n(우클릭으로 선택)',
@@ -177,30 +176,6 @@ class MainWindow(QMainWindow):
         self.dockingWidget.setFloating(False)  # ? False했는데도 움직여짐,,
 
         self.addDockWidget(Qt.LeftDockWidgetArea, self.dockingWidget)
-
-    '''def mousePressEvent (self, eventQMouseEvent):
-        if self.exceptFieldActive:
-            self.originQPoint = eventQMouseEvent.pos()
-            self.currentQRubberBand = QRubberBand(QRubberBand.Rectangle, self)
-            self.currentQRubberBand.show()
-
-    def mouseMoveEvent (self, eventQMouseEvent):
-        if self.exceptFieldActive:
-            self.currentQRubberBand.setGeometry(QRect(self.originQPoint, eventQMouseEvent.pos()).normalized())
-
-    def mouseReleaseEvent (self, eventQMouseEvent):
-        if self.exceptFieldActive:
-            self.exceptFieldConfirm()
-            if self.reply == QMessageBox.Yes:
-                self.currentQRubberBand.hide()
-                self.exceptFieldActive = False
-                self.currentQRect = self.currentQRubberBand.geometry()
-                self.cropImage()
-            else:
-                self.currentQRubberBand.hide()
-            self.currentQRubberBand.deleteLater()'''
-
-
 
 
 
