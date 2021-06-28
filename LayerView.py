@@ -27,6 +27,7 @@ class LayerView(QGraphicsView):
 
         self.DEFAULT_COLOR = QColor(255, 0, 0, 50)
         self.SELECTED_COLOR = QColor(0, 0, 255, 50)
+        self.NEWBOX_COLOR = QColor(0, 200, 0, 50)
 
     def setSignal(self, on_data_changed_func, get_data_func, notify_selected_index, notify_added_box):
         self.on_data_changed = on_data_changed_func
@@ -57,7 +58,6 @@ class LayerView(QGraphicsView):
         current_item = self.bndboxList[i]
         self.centerOn(current_item)
         self.changeSelctedItemColor(current_item)
-        # test = current_item.scenePos()
         # self.centerOn(current_item.pos())
 
     def on_deleted(self, i):
@@ -66,7 +66,10 @@ class LayerView(QGraphicsView):
 
     def changeSelctedItemColor(self, item):
         if self.currentItem is not None:
-            self.currentItem.setBrush(self.DEFAULT_COLOR) # TODO: 이전색깔로 돌아가도록 해야함 (newBox)
+            if self.currentItem.isInitData:
+                self.currentItem.setBrush(self.DEFAULT_COLOR)
+            else:
+                self.currentItem.setBrush(self.NEWBOX_COLOR)
         self.currentItem = item
         self.currentItem.setBrush(self.SELECTED_COLOR)
 
@@ -105,7 +108,10 @@ class LayerView(QGraphicsView):
 
     def redraw_box(self, i, new_row): # ?
         self.scene.removeItem(self.bndboxList[i])
-        self.bndboxList[i].setBrush(self.DEFAULT_COLOR)
+        if self.bndboxList[i].isInitData:
+            self.bndboxList[i].setBrush(self.DEFAULT_COLOR)
+        else:
+            self.bndboxList[i].setBrush(self.NEWBOX_COLOR)
         self.bndboxList[i].setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.bndboxList[i].setFlag(QGraphicsItem.ItemIsMovable, False)
         self.bndboxList[i].setFlag(QGraphicsItem.ItemIsFocusable, True)
@@ -172,7 +178,7 @@ class GraphicsScene(QGraphicsScene):
 
         elif self.isAdding:  # addBtn이 눌려있고 빈 공간일 때 새로운 박스 추가
             new_index = len(self.bndBoxList)
-            self._current_rect_item = BoundingBox(new_index)
+            self._current_rect_item = BoundingBox(new_index, isInitData=False)
             self._current_rect_item.setBrush(self.NEWBOX_COLOR)
             self._current_rect_item.setFlag(QGraphicsItem.ItemIsSelectable, True)
             # self._current_rect_item.setFlag(QGraphicsItem.ItemIsMovable, True)
@@ -202,9 +208,10 @@ class GraphicsScene(QGraphicsScene):
 
 
 class BoundingBox(QGraphicsRectItem):
-    def __init__(self, initialIndex):
+    def __init__(self, initialIndex, isInitData=True):
         super().__init__()
         self.tableIndex = initialIndex
+        self.isInitData = isInitData
 
 
 class LayerViewModel:
