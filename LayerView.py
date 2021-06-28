@@ -10,7 +10,9 @@ class LayerView(QGraphicsView):
     def __init__(self, backgroundimg):
         super().__init__()
 
-        self.scene = GraphicsScene()
+        self.bndboxList = []
+
+        self.scene = GraphicsScene(self.bndboxList)
         self.scene.set_image(backgroundimg)
         self.setScene(self.scene)
 
@@ -19,7 +21,6 @@ class LayerView(QGraphicsView):
         # self._isPanning = False #TODO: drag로 움직일 수 있도록 수정필요
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.bndboxList = []
 
         self.selectedIndex = None
         self.currentItem = None
@@ -71,9 +72,11 @@ class LayerView(QGraphicsView):
 
     def activateDrawBoxMode(self):
         self.scene.isAdding = True
+        self.scene.BndBoxIndex = len(self.bndboxList)
 
     def deactivateDrawBoxMode(self):
         self.scene.isAdding = False
+        self.scene.BndBoxIndex = None
 
     def wheelEvent(self, event):
         zoomInFactor = 1.25
@@ -117,7 +120,7 @@ class LayerView(QGraphicsView):
 
 
 class GraphicsScene(QGraphicsScene):
-    def __init__(self):
+    def __init__(self, bndBoxList):
         super().__init__()
         # self.setBackgroundBrush(QBrush(QColor(255, 255, 255, 100)))
         self.backImg = ''
@@ -133,6 +136,8 @@ class GraphicsScene(QGraphicsScene):
         self.on_added = None  # initialize from viewModel
 
         self.NEWBOX_COLOR = QColor(0, 200, 0, 50)
+
+        self.bndBoxList = bndBoxList # From QGraphicsView
 
 
     def set_image(self, img_path):
@@ -166,7 +171,8 @@ class GraphicsScene(QGraphicsScene):
             # QGraphicsItem.mousePressEvent(self.selectedItem, event)
 
         elif self.isAdding:  # addBtn이 눌려있고 빈 공간일 때 새로운 박스 추가
-            self._current_rect_item = QGraphicsRectItem()
+            new_index = len(self.bndBoxList)
+            self._current_rect_item = BoundingBox(new_index)
             self._current_rect_item.setBrush(self.NEWBOX_COLOR)
             self._current_rect_item.setFlag(QGraphicsItem.ItemIsSelectable, True)
             # self._current_rect_item.setFlag(QGraphicsItem.ItemIsMovable, True)
@@ -184,11 +190,8 @@ class GraphicsScene(QGraphicsScene):
 
     def mouseReleaseEvent(self, event):
         if not self.isExistingBox and self._current_rect_item is not None: # 박스 그릴 때
+            self.bndBoxList.append(self._current_rect_item)
             self._end = event.scenePos()
-            print('size: ', self._current_rect_item.sceneBoundingRect().size()) # width, height
-            print('start: ', self._start.x())   # xmin, ymin
-            print('end: ', self._end.x())       # xmax, ymax
-            # TODO: 여기에서 bndbox 좌표를 넘겨서 model에 추가해야함
 
             # initialize
             new_bndbox = [int(self._start.x()), int(self._start.y()), int(self._end.x()), int(self._end.y())]

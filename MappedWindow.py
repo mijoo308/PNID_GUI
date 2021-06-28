@@ -48,7 +48,7 @@ class MappedWindow(QMainWindow):
 
         # self.layer = over_layer(self.mappedArea.img_label)
         # self.layer = BoxViewModel(data_model=self.MODEL,
-        #                           parent=self.mappedArea.img_label)  ### TODO: XML_RESULT 관리
+        #                           parent=self.mappedArea.img_label)  ###
         #
         # self.layer.boxView.resize(self.mappedArea.img_label.width(), self.mappedArea.img_label.height())
         # self.layer.boxView.setVisible(True)
@@ -139,10 +139,6 @@ class MappedWindow(QMainWindow):
         self.dockingWidget.setFloating(False)
 
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockingWidget)
-
-    # def addBtnClicked(self):
-    #     self.tab1_table
-    #     # TODO: tableViewModel에서 이벤트 만든 후 연결하기
 
     def saveToXmlBtnClicked(self):
         self.tab1_table.saveXML(self.IMG_NAME)
@@ -281,8 +277,6 @@ class TableView(QTableWidget):
         row = self.rowCount()
         self.insertRow(row)
 
-        test = self.rowCount()
-
         ckbox = QCheckBox()
         self.checkBoxList.append(ckbox)
         self.setTableCell(addedData, row)
@@ -344,7 +338,6 @@ class TableViewModel:
         # self.boxModel = BoxModel(self.data)
 
         # 처음엔 원본xml로 초기화 (뷰)
-        self.Test = False
         self.tableView = view
         self.tableView.setSignal(on_data_changed_from_view=self.getChagedDataFromView, get_data_func=self.getBoxData,
                                  notify_selected_index=self.notify_selected_index,
@@ -398,7 +391,6 @@ class over_layer(QWidget):
     def paintEvent(self, event):  # painter에 그릴 때(?) 쓰는 이벤트 함수
         painter = QPainter()
         painter.begin(self)
-        # painter.fillRect(event.rect(), QBrush(QColor(1, 1, 1, 100))) #TODO QBrush(Qt.transparent)로 바꿔주기
 
         painter.setBrush(QColor(255, 229, 204, 100))  # 채우기 색깔
         painter.setPen(QPen(QColor(255, 128, 0), 3))  # 선 색깔
@@ -462,8 +454,6 @@ class BoxModel:
         if idx is None:
             return self.data
         else:
-            test1 = self.data
-            test = self.data[idx]
             return self.data[idx]
 
     def setBoxData(self, i, new_data):
@@ -489,7 +479,6 @@ class BoxModel:
         if ymax - ymin > xmax - xmin: orientation = 90
 
         new_row = ['text', string, xmin, ymin, xmax, ymax, orientation, True]
-        # test = self.data
         # self.data = np.append(self.data, new_row, axis=1) # np제거
         self.data.append(new_row)
 
@@ -512,7 +501,6 @@ class BoxViewModel:
         self.updateBoxData(row, value)
 
         print(row, value, "is changed")
-        # box 그리는 것도 추가해야함 model -> layer view
 
     def getBoxData(self):
         return self.model.getBoxData()
