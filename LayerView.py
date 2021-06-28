@@ -29,6 +29,9 @@ class LayerView(QGraphicsView):
         self.SELECTED_COLOR = QColor(0, 0, 255, 50)
         self.NEWBOX_COLOR = QColor(0, 200, 0, 50)
 
+        self.zoomInCnt = 0
+        self.zoomOutCnt = 0
+
     def setSignal(self, on_data_changed_func, get_data_func, notify_selected_index, notify_added_box):
         self.on_data_changed = on_data_changed_func
         self.get_data = get_data_func
@@ -95,9 +98,16 @@ class LayerView(QGraphicsView):
         # Zoom
         if event.angleDelta().y() > 0:
             zoomFactor = zoomInFactor
+            if self.zoomInCnt < 3:
+                self.zoomInCnt += 1
+                self.scale(zoomFactor, zoomFactor)
+                self.zoomOutCnt -= 1
         else:
             zoomFactor = zoomOutFactor
-        self.scale(zoomFactor, zoomFactor)
+            if self.zoomOutCnt <= 10:
+                self.zoomOutCnt += 1
+                self.scale(zoomFactor, zoomFactor)
+                self.zoomInCnt -= 1
 
         # Get the new position
         newPos = self.mapToScene(event.pos())
