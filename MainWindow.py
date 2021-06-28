@@ -95,10 +95,6 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self, 'Information', '알림\n\n최대한 도면 영역만을 선택해주십시오.\n(우클릭으로 선택)',
                                 QMessageBox.Ok, QMessageBox.Ok)
 
-    def exceptFieldConfirm(self):
-        self.reply = QMessageBox.information(self, 'Information', '해당 포인트로 저장하시겠습니까',
-                                QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-
     def openFileDialog(self):
         self.dialog = QDialog()
 

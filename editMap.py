@@ -15,18 +15,58 @@ class graphicsView(QGraphicsView):
         self.setScene(self.scene)
 
     def mousePressEvent(self, event):
-        self.setDragMode(self.ScrollHandDrag)
+        if event.button() == Qt.LeftButton:
+            self.setDragMode(self.ScrollHandDrag)
         super(graphicsView, self).mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
-        self.setDragMode(self.NoDrag)
+        if event.button() == Qt.LeftButton:
+            self.setDragMode(self.NoDrag)
         super(graphicsView, self).mouseReleaseEvent(event)
 
 class GraphicsScene(QGraphicsScene):
     def __init__(self):
         super().__init__()
 
+        self._start = QPointF()
+        self._current_rect_item = None
+
+        self.FIELD_COLOR = QColor(137, 119, 173, 50)
+
     def set_image(self, img_path):
         self.mapImg = QPixmap(img_path)
         graphicsPixmapItem = QGraphicsPixmapItem(self.mapImg)
         self.addItem(graphicsPixmapItem)
+
+    def exceptFieldConfirm(self):
+        self.msg = QMessageBox()
+        self.msg.setIcon(QMessageBox.Question)
+        self.msg.setText('해당 포인트로 저장 하시겠습니까 ?')
+        self.msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        self.msg.setDefaultButton(QMessageBox.Yes)
+        self.reply = self.msg.exec_()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.RightButton:
+            self._current_rect_item = QGraphicsRectItem()
+            self._current_rect_item.setBrush(self.FIELD_COLOR)
+            self._current_rect_item.setFlag(QGraphicsItem.ItemIsMovable, True)
+            self.addItem(self._current_rect_item)
+            self._start = event.scenePos()
+            r = QRectF(self._start, self._start)
+            self._current_rect_item.setRect(r)
+        super(GraphicsScene, self).mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if self._current_rect_item is not None:
+            r = QRectF(self._start, event.scenePos()).normalized()
+            self._current_rect_item.setRect(r)
+        super(GraphicsScene, self).mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.RightButton:
+            if self._current_rect_item is not None:
+                self.exceptFieldConfirm()
+                self.removeItem(self._current_rect_item)
+                self._current_rect_item = None
+        super(GraphicsScene, self).mouseReleaseEvent(event)
