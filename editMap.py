@@ -20,6 +20,31 @@ class graphicsView(QGraphicsView):
         else:
             self.scene.active = False
 
+    def wheelEvent(self, event):
+        zoomInFactor = 1.25
+        zoomOutFactor = 1 / zoomInFactor
+
+        # Set Anchors
+        self.setTransformationAnchor(self.NoAnchor)
+        self.setResizeAnchor(self.NoAnchor)
+
+        # Save the scene pos
+        oldPos = self.mapToScene(event.pos())
+
+        # Zoom
+        if event.angleDelta().y() > 0:
+            zoomFactor = zoomInFactor
+        else:
+            zoomFactor = zoomOutFactor
+        self.scale(zoomFactor, zoomFactor)
+
+        # Get the new position
+        newPos = self.mapToScene(event.pos())
+
+        # Move scene to old position
+        delta = newPos - oldPos
+        self.translate(delta.x(), delta.y())
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.setDragMode(self.ScrollHandDrag)
@@ -37,13 +62,14 @@ class GraphicsScene(QGraphicsScene):
 
         self._start = QPointF()
         self._current_rect_item = None
+        self.region = QRectF()
 
         self.FIELD_COLOR = QColor(137, 119, 173, 50)
 
     def set_image(self, img_path):
         self.mapImg = QPixmap(img_path)
-        graphicsPixmapItem = QGraphicsPixmapItem(self.mapImg)
-        self.addItem(graphicsPixmapItem)
+        self.graphicsPixmapItem = QGraphicsPixmapItem(self.mapImg)
+        self.addItem(self.graphicsPixmapItem)
 
     def exceptFieldConfirm(self):
         self.msg = QMessageBox()
@@ -66,8 +92,8 @@ class GraphicsScene(QGraphicsScene):
 
     def mouseMoveEvent(self, event):
         if self._current_rect_item is not None and self.active:
-            r = QRectF(self._start, event.scenePos()).normalized()
-            self._current_rect_item.setRect(r)
+            self.region = QRectF(self._start, event.scenePos()).normalized()
+            self._current_rect_item.setRect(self.region)
         super(GraphicsScene, self).mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
@@ -76,6 +102,16 @@ class GraphicsScene(QGraphicsScene):
                 self.exceptFieldConfirm()
                 self.removeItem(self._current_rect_item)
                 if self.reply == QMessageBox.Yes:
+                    self.cutoffImg()
                     self._current_rect_item = None
                     self.active = False
         super(GraphicsScene, self).mouseReleaseEvent(event)
+
+    def cutoffImg(self):
+        painterFrame = QPainter(self.mapImg)
+        painterFrame.setCompositionMode(QPainter.CompositionMode_Source)
+        painterFrame.fillRect(self.region, Qt.transparent)
+        painterFrame.end()
+        self.removeItem(self.graphicsPixmapItem)
+        self.graphicsPixmapItem = QGraphicsPixmapItem(self.mapImg)
+        self.addItem(self.graphicsPixmapItem)
