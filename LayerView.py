@@ -32,6 +32,8 @@ class LayerView(QGraphicsView):
         self.zoomInCnt = 0
         self.zoomOutCnt = 0
 
+        self.scene.changeSelectedItemColor = self.changeSelctedItemColor
+
     def setSignal(self, on_data_changed_func, get_data_func, notify_selected_index, notify_added_box):
         self.on_data_changed = on_data_changed_func
         self.get_data = get_data_func
@@ -154,6 +156,7 @@ class GraphicsScene(QGraphicsScene):
         self.NEWBOX_COLOR = QColor(0, 200, 0, 50)
 
         self.bndBoxList = bndBoxList # From QGraphicsView
+        self.changeSelectedItemColor = None # From QGraphicsView
 
 
     def set_image(self, img_path):
@@ -184,6 +187,7 @@ class GraphicsScene(QGraphicsScene):
         if self.isExistingBox: # 존재하는 박스 클릭 시
             self.selectedItem = self.itemAt(event.scenePos(), QTransform())
             self.on_selected(self.selectedItem.tableIndex)
+            self.changeSelectedItemColor(self.selectedItem)
             # QGraphicsItem.mousePressEvent(self.selectedItem, event)
 
         elif self.isAdding:  # addBtn이 눌려있고 빈 공간일 때 새로운 박스 추가
