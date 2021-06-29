@@ -305,10 +305,10 @@ class TableView(QTableWidget):
                 edited_row_index = self.selectedIndexes()[0].row()
                 edited_row = self.getTableCell(edited_row_index)
 
-                if self.checkBoxList[edited_row_index].isChecked():
-                    edited_row.append(1)  # TODO: bool 타입으로 저장이 안되는 것 수정 필요
-                else:
-                    edited_row.append(0)
+                # if self.checkBoxList[edited_row_index].isChecked():
+                #     edited_row.append(1)  # TODO: bool 타입으로 저장이 안되는 것 수정 필요
+                # else:
+                #     edited_row.append(0)
 
                 # edited_row = np.array(edited_row)  # list type -> np  np제거
                 print(edited_row_index, 'changed')  # Test
@@ -317,6 +317,7 @@ class TableView(QTableWidget):
     def delete_cell(self):
         deleted_index = self.selectedIndexes()[0].row()
         self.removeRow(deleted_index)
+        del self.checkBoxList[deleted_index]
         self.on_deleted(deleted_index)
 
     def saveXML(self, filename):
