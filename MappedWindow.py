@@ -2,8 +2,10 @@ import os
 import sys
 import numpy as np
 from PyQt5.QtCore import QObject, pyqtSignal
-from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QDockWidget, QVBoxLayout, QTabWidget, QTableWidget, \
-    QAbstractItemView, QCheckBox, QTableWidgetItem, QHeaderView, QPushButton, QAction
+'''from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QDockWidget, QVBoxLayout, QTabWidget, QTableWidget, \
+    QAbstractItemView, QCheckBox, QTableWidgetItem, QHeaderView, QPushButton, QAction, QComboBox, QStandardItemModel,\
+    QTreeView'''
+from PyQt5.QtWidgets import *
 
 from PyQt5.QtGui import QPainter, QPen, QColor, QStandardItemModel
 
@@ -33,7 +35,6 @@ class MappedWindow(QMainWindow):
         self.move(100, 100)
         self.resize(1600, 800)
 
-        self.createActioon()
         self.createMenubar()
 
         self.mapWidget = QWidget()
@@ -61,29 +62,6 @@ class MappedWindow(QMainWindow):
         self.setCentralWidget(self.layerView)
         self.show()
 
-    def createActioon(self):
-        self.zoomInAct = QAction("Zoom &In (25%)", self, shortcut='Ctrl++', enabled=True, triggered=self.zoomIn)
-        self.zoomOutAct = QAction("Zoom &Out (25%)", self, shortcut='Ctrl+-', enabled=True, triggered=self.zoomOut)
-
-    def zoomIn(self):
-        self.scaleImage(1.25)
-
-    def zoomOut(self):
-        self.scaleImage(0.8)
-
-    def scaleImage(self, factor):
-        self.scaleFactor *= factor
-        self.mappedArea.img_label.resize(self.scaleFactor * self.mappedArea.img_label.pixmap().size())
-
-        self.adjustScrollBar(self.mappedArea.scrollbarX, factor)
-        self.adjustScrollBar(self.mappedArea.scrollbarY, factor)
-
-        self.zoomInAct.setEnabled(self.scaleFactor < 4.0)
-        self.zoomOutAct.setEnabled(self.scaleFactor > 0.222)
-
-    def adjustScrollBar(self, scrollBar, factor):
-        scrollBar.setValue(int(factor * scrollBar.value()
-                               + ((factor - 1) * scrollBar.pageStep() / 2)))
 
     def createMenubar(self):
         menuBar = self.menuBar()
@@ -94,9 +72,6 @@ class MappedWindow(QMainWindow):
         menuBar.addMenu('&Recognition')
         menuBar.addMenu('&Unit Function Test')
         menuBar.addMenu('&Temporary Test')
-        zoom = menuBar.addMenu('&Zoom')
-        zoom.addAction(self.zoomInAct)
-        zoom.addAction(self.zoomOutAct)
 
     def mappedAreaViewr(self):
         self.mappedArea = ImgView()
@@ -208,6 +183,8 @@ class TableView(QTableWidget):
         self.cellClicked.connect(self.cell_click)  # cellClick 이벤트를 감지하면 cell_click 함수를 실행
         self.itemChanged.connect(self.edit_cell)
         self.setStyleSheet("selection-background-color : #c1c5ff;" "selection-color : black;")
+        self.category = QComboBox()
+        self.category.currentIndexChanged.connect(self.editText)
 
         # TODO: checkbox event 설정 필요
 
@@ -294,10 +271,55 @@ class TableView(QTableWidget):
         return result
 
     def cell_click(self):
-        clicked_row = (self.selectedIndexes())[0].row()
-        print(clicked_row, 'clicked')  # Test
-        print(self.getTableCell(clicked_row))  # Test
-        self.on_selected(clicked_row)
+        self.clicked_row = (self.selectedIndexes())[0].row()
+        index = (self.selectionModel().currentIndex())
+        self.clicked_col = index.column()
+        print(self.clicked_row, self.clicked_col, 'clicked')  # Test
+        print(self.getTableCell(self.clicked_row))  # Test
+
+        if self.clicked_col == 2 and self.getTableCell(i=self.clicked_row, j=self.clicked_col) == ['']:
+            self.selectText()
+        self.on_selected(self.clicked_row)
+
+    def selectText(self):
+        model = StandardItemModel()
+        model.setHorizontalHeaderLabels(['Category', 'Text'])
+        category_1 = ['a', 'b', 'c', 'w']
+        category_2 = ['d', 'e', 'f']
+        for i in range(2):
+            parent = model
+            it = QStandardItem('Category {}'.format(i))
+            parent.appendRow(it)
+            parent = it
+            if i == 0:
+                for j in category_1:
+                    it = QStandardItem(j)
+                    parent.appendRow(it)
+
+            if i == 1:
+                for j in category_2:
+                    it = QStandardItem(j)
+                    parent.appendRow(it)
+
+        self.category.setModel(model)
+        view = QTreeView()
+        self.category.setView(view)
+        self.setCellWidget(self.clicked_row, self.clicked_col, self.category)
+
+    def textConfirm(self):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Question)
+        msg.setText('해당 텍스트로 저장 하시겠습니까 ?')
+        msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msg.setDefaultButton(QMessageBox.Yes)
+        return msg.exec_()
+
+    def editText(self):
+        text = str(self.category.currentText())
+        if text != 'Category 0':
+            if self.textConfirm() == QMessageBox().Yes:
+                self.setItem(self.clicked_row, self.clicked_col, QTableWidgetItem(text))
+                print(text)
 
     def edit_cell(self):
         if self.IsInitialized:
@@ -325,6 +347,14 @@ class TableView(QTableWidget):
 
     def selectionChange(self, i):  # ViewModel에서 사용
         self.setCurrentCell(i, 2)
+
+
+class StandardItemModel(QStandardItemModel):
+    def flags(self, index):
+        fl = QStandardItemModel.flags(self, index)
+        if self.hasChildren(index):
+            fl &= ~Qt.ItemIsSelectable
+        return fl
 
 
 # ViewModel
