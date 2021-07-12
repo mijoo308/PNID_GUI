@@ -284,11 +284,27 @@ class TableView(QTableWidget):
     def selectText(self):
         model = StandardItemModel()
         model.setHorizontalHeaderLabels(['Category', 'Text'])
-        category_1 = ['a', 'b', 'c', 'w']
-        category_2 = ['d', 'e', 'f']
-        for i in range(2):
+        category = ['equipment_symbol', 'pipe_symbol', 'instrument_symbol']
+
+        parent = model
+        equipment = QStandardItem(category[0])
+        parent.appendRow(equipment)
+        pipe = QStandardItem(category[1])
+        parent.appendRow(pipe)
+        instrument = QStandardItem(category[2])
+        parent.appendRow(instrument)
+
+        f = open('./SymbolClass_Type/Hyundai_SymbolClass_Type.txt', 'r')
+
+        lines = f.readlines()
+        for line in lines:
+            i = line.find('|')
+            if line[0:i+1] == category[0]:
+                equipment.appendRow(line[i+1:line.length()])
+
+        '''for i in category:
             parent = model
-            it = QStandardItem('Category {}'.format(i))
+            it = QStandardItem(i)
             parent.appendRow(it)
             parent = it
             if i == 0:
@@ -299,7 +315,7 @@ class TableView(QTableWidget):
             if i == 1:
                 for j in category_2:
                     it = QStandardItem(j)
-                    parent.appendRow(it)
+                    parent.appendRow(it)'''
 
         self.category.setModel(model)
         view = QTreeView()
@@ -316,7 +332,7 @@ class TableView(QTableWidget):
 
     def editText(self):
         text = str(self.category.currentText())
-        if text != 'Category 0':
+        if text != 'equipment_symbol':
             if self.textConfirm() == QMessageBox().Yes:
                 self.setItem(self.clicked_row, self.clicked_col, QTableWidgetItem(text))
                 print(text)
