@@ -183,8 +183,16 @@ class TableView(QTableWidget):
         self.cellClicked.connect(self.cell_click)  # cellClick 이벤트를 감지하면 cell_click 함수를 실행
         self.itemChanged.connect(self.edit_cell)
         self.setStyleSheet("selection-background-color : #c1c5ff;" "selection-color : black;")
-        self.category = QComboBox()
-        self.category.currentIndexChanged.connect(self.editText)
+        self.type = QComboBox()
+        self.type.addItem('equipment_symbol')
+        self.type.addItem('pipe_symbol')
+        self.type.addItem('instrument_symbol')
+        self.type.addItem('text')
+        self.type.currentIndexChanged.connect(self.editText())
+        '''self.makeTextComboBox()
+        self.equipment.currentIndexChanged.connect(self.editText(text=self.equipment.currentText()))
+        self.pipe.currentIndexChanged.connect(self.editText(text=self.pipe.currentText()))
+        self.instrument.currentIndexChanged.connect(self.editText(text=self.instrument.currentText()))'''
 
         # TODO: checkbox event 설정 필요
 
@@ -277,59 +285,42 @@ class TableView(QTableWidget):
         print(self.clicked_row, self.clicked_col, 'clicked')  # Test
         print(self.getTableCell(self.clicked_row))  # Test
 
+        if self.clicked_col == 1 and self.getTableCell(i=self.clicked_row, j=self.clicked_col) == ['']:
+            self.setCellWidget(self.clicked_row, self.clicked_col, self.type)
         if self.clicked_col == 2 and self.getTableCell(i=self.clicked_row, j=self.clicked_col) == ['']:
             self.selectText()
         self.on_selected(self.clicked_row)
 
-    def selectText(self):
-        model = StandardItemModel()
-        model.setHorizontalHeaderLabels(['Category'])
-        category = ['equipment_symbol', 'pipe_symbol', 'instrument_symbol']
-
-        parent = model
-        equipment = QStandardItem(category[0])
-        parent.appendRow(equipment)
-        pipe = QStandardItem(category[1])
-        parent.appendRow(pipe)
-        instrument = QStandardItem(category[2])
-        parent.appendRow(instrument)
+    def makeTextComboBox(self):
+        self.equipment = QComboBox()
+        self.pipe = QComboBox()
+        self.instrument = QComboBox()
 
         f = open('./SymbolClass_Type/Hyundai_SymbolClass_Type.txt', 'r')
-
         lines = f.readlines()
         for line in lines:
             i = line.find('|')
             j = line.find('\n')
-            if line[0:i] == category[0]:
-                equipment.appendRow(QStandardItem(line[i+1:j]))
-            elif line[0:i] == category[1]:
-                pipe.appendRow(QStandardItem(line[i+1:j]))
-            elif line[0:i] == category[2]:
-                instrument.appendRow(QStandardItem(line[i+1:j]))
+            if line[0:i] == 'equipment_symbol':
+                self.equipment.addItem(line[i + 1:j])
+            elif line[0:i] == 'pipe_symbol':
+                self.pipe.addItem(line[i + 1:j])
+            elif line[0:i] == 'instrument_symbol':
+                self.instrument.addItem(line[i + 1:j])
 
-        self.category.setModel(model)
-        view = QTreeView()
-        self.category.setView(view)
-        view.setColumnWidth(0, 400)
-        view.expandAll()
-        view.horizontalScrollBar().setEnabled(True)
-        view.setAutoScroll(False)
-        view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.setCellWidget(self.clicked_row, self.clicked_col, self.category)
+    def selectText(self):
+        if self.getTableCell(i=self.clicked_row, j=1) == ['equipment_symbol']:
+            self.setCellWidget(self.clicked_row, self.clicked_col, self.equipment)
 
-    def textConfirm(self):
-        msg = QMessageBox()
-        msg.setIcon(QMessageBox.Question)
-        msg.setText('해당 텍스트로 저장 하시겠습니까 ?')
-        msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        msg.setDefaultButton(QMessageBox.Yes)
-        return msg.exec_()
+        elif self.getTableCell(i=self.clicked_row, j=1) == ['pipe_symbol']:
+            self.setCellWidget(self.clicked_row, self.clicked_col, self.equipment)
+
+        elif self.getTableCell(i=self.clicked_row, j=1) == ['instrument_symbol']:
+            self.setCellWidget(self.clicked_row, self.clicked_col, self.equipment)
 
     def editText(self):
-        text = str(self.category.currentText())
-        if text != 'equipment_symbol':
-            if self.textConfirm() == QMessageBox().Yes:
-                self.setItem(self.clicked_row, self.clicked_col, QTableWidgetItem(text))
+        text = str(self.type.currentText())
+        self.setItem(self.clicked_row, self.clicked_col, QTableWidgetItem(text))
 
     def edit_cell(self):
         if self.IsInitialized:
@@ -357,14 +348,6 @@ class TableView(QTableWidget):
 
     def selectionChange(self, i):  # ViewModel에서 사용
         self.setCurrentCell(i, 2)
-
-
-class StandardItemModel(QStandardItemModel):
-    def flags(self, index):
-        fl = QStandardItemModel.flags(self, index)
-        if self.hasChildren(index):
-            fl &= ~Qt.ItemIsSelectable
-        return fl
 
 
 # ViewModel
@@ -519,7 +502,7 @@ class BoxModel:
 
         if ymax - ymin > xmax - xmin: orientation = 90
 
-        new_row = ['text', string, xmin, ymin, xmax, ymax, orientation, True]
+        new_row = ['', string, xmin, ymin, xmax, ymax, orientation, True]
         # self.data = np.append(self.data, new_row, axis=1) # np제거
         self.data.append(new_row)
 
