@@ -89,6 +89,24 @@ def parseXML(xml_path, xml_type):
 
     return result
 
+def mergeXML(xml1, xml2):
+
+    tree1 = ET.parse(xml1)
+    root1 = tree1.getroot()
+    filename = root1.find('filename').text.split('.')[0]
+
+    object = 'symbol_object'
+
+    tree2 = ET.parse(xml2)
+    root2 = tree2.getroot()
+
+    for child in root2.findall(object):
+        root1.append(child)
+
+    indent(root1)
+    tree1 = ET.ElementTree(root1)
+    tree1.write(filename + '_all.xml')
+
 def indent(elem, level=0):  # 자료 출처 https://goo.gl/J8VoDK
     """ XML의 들여쓰기 포함한 출력을 위한 함수
 
