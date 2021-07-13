@@ -184,15 +184,15 @@ class TableView(QTableWidget):
         self.itemChanged.connect(self.edit_cell)
         self.setStyleSheet("selection-background-color : #c1c5ff;" "selection-color : black;")
         self.type = QComboBox()
+        self.type.addItem('text')
         self.type.addItem('equipment_symbol')
         self.type.addItem('pipe_symbol')
         self.type.addItem('instrument_symbol')
-        self.type.addItem('text')
-        self.type.currentIndexChanged.connect(self.editText())
-        '''self.makeTextComboBox()
-        self.equipment.currentIndexChanged.connect(self.editText(text=self.equipment.currentText()))
-        self.pipe.currentIndexChanged.connect(self.editText(text=self.pipe.currentText()))
-        self.instrument.currentIndexChanged.connect(self.editText(text=self.instrument.currentText()))'''
+        self.type.currentIndexChanged.connect(self.editType)
+        self.makeTextComboBox()
+        self.equipment.currentIndexChanged.connect(self.equipmentType)
+        self.pipe.currentIndexChanged.connect(self.pipeType)
+        self.instrument.currentIndexChanged.connect(self.instrumentType)
 
         # TODO: checkbox event 설정 필요
 
@@ -285,10 +285,9 @@ class TableView(QTableWidget):
         print(self.clicked_row, self.clicked_col, 'clicked')  # Test
         print(self.getTableCell(self.clicked_row))  # Test
 
-        if self.clicked_col == 1 and self.getTableCell(i=self.clicked_row, j=self.clicked_col) == ['']:
+        if self.clicked_col == 1:
             self.setCellWidget(self.clicked_row, self.clicked_col, self.type)
-        if self.clicked_col == 2 and self.getTableCell(i=self.clicked_row, j=self.clicked_col) == ['']:
-            self.selectText()
+            self.setItem(self.clicked_row, self.clicked_col, QTableWidgetItem(self.type.currentText()))
         self.on_selected(self.clicked_row)
 
     def makeTextComboBox(self):
@@ -308,19 +307,38 @@ class TableView(QTableWidget):
             elif line[0:i] == 'instrument_symbol':
                 self.instrument.addItem(line[i + 1:j])
 
-    def selectText(self):
-        if self.getTableCell(i=self.clicked_row, j=1) == ['equipment_symbol']:
-            self.setCellWidget(self.clicked_row, self.clicked_col, self.equipment)
+    def selectText(self, text):
+        if text == 'equipment_symbol':
+            self.setCellWidget(self.clicked_row, self.clicked_col + 1, self.equipment)
 
-        elif self.getTableCell(i=self.clicked_row, j=1) == ['pipe_symbol']:
-            self.setCellWidget(self.clicked_row, self.clicked_col, self.equipment)
+        elif text == 'pipe_symbol':
+            self.setCellWidget(self.clicked_row, self.clicked_col + 1, self.pipe)
 
-        elif self.getTableCell(i=self.clicked_row, j=1) == ['instrument_symbol']:
-            self.setCellWidget(self.clicked_row, self.clicked_col, self.equipment)
+        elif text == 'instrument_symbol':
+            self.setCellWidget(self.clicked_row, self.clicked_col + 1, self.instrument)
 
-    def editText(self):
-        text = str(self.type.currentText())
-        self.setItem(self.clicked_row, self.clicked_col, QTableWidgetItem(text))
+    def editType(self):
+        type = str(self.type.currentText())
+        self.setItem(self.clicked_row, self.clicked_col, QTableWidgetItem(type))
+        self.selectText(text=type)
+        if type == 'equipment_symbol':
+            self.equipmentType()
+        elif type == 'pipe_symbol':
+            self.pipeType()
+        elif type == 'instrument_symbol':
+            self.instrumentType()
+
+    def equipmentType(self):
+        type = str(self.equipment.currentText())
+        self.setItem(self.clicked_row, 2, QTableWidgetItem(type))
+
+    def pipeType(self):
+        type = str(self.pipe.currentText())
+        self.setItem(self.clicked_row, 2, QTableWidgetItem(type))
+
+    def instrumentType(self):
+        type = str(self.instrument.currentText())
+        self.setItem(self.clicked_row, 2, QTableWidgetItem(type))
 
     def edit_cell(self):
         if self.IsInitialized:
@@ -335,6 +353,8 @@ class TableView(QTableWidget):
 
                 # edited_row = np.array(edited_row)  # list type -> np  np제거
                 print(edited_row_index, 'changed')  # Test
+                if self.getTableCell(i=edited_row_index, j=1) == ['']:
+                    self.setItem(edited_row_index, 1, QTableWidgetItem('text'))
                 self.on_data_changed_from_view(edited_row_index, edited_row)  # row 단위로 업데이트
 
     def delete_cell(self):
