@@ -283,7 +283,7 @@ class TableView(QTableWidget):
 
     def selectText(self):
         model = StandardItemModel()
-        model.setHorizontalHeaderLabels(['Category', 'Text'])
+        model.setHorizontalHeaderLabels(['Category'])
         category = ['equipment_symbol', 'pipe_symbol', 'instrument_symbol']
 
         parent = model
@@ -299,27 +299,19 @@ class TableView(QTableWidget):
         lines = f.readlines()
         for line in lines:
             i = line.find('|')
-            if line[0:i+1] == category[0]:
-                equipment.appendRow(line[i+1:line.length()])
-
-        '''for i in category:
-            parent = model
-            it = QStandardItem(i)
-            parent.appendRow(it)
-            parent = it
-            if i == 0:
-                for j in category_1:
-                    it = QStandardItem(j)
-                    parent.appendRow(it)
-
-            if i == 1:
-                for j in category_2:
-                    it = QStandardItem(j)
-                    parent.appendRow(it)'''
+            j = line.find('\n')
+            if line[0:i] == category[0]:
+                equipment.appendRow(QStandardItem(line[i+1:j]))
+            elif line[0:i] == category[1]:
+                pipe.appendRow(QStandardItem(line[i+1:j]))
+            elif line[0:i] == category[2]:
+                instrument.appendRow(QStandardItem(line[i+1:j]))
 
         self.category.setModel(model)
         view = QTreeView()
         self.category.setView(view)
+        view.setColumnWidth(0, 500)
+        view.expandAll()
         self.setCellWidget(self.clicked_row, self.clicked_col, self.category)
 
     def textConfirm(self):
@@ -335,7 +327,6 @@ class TableView(QTableWidget):
         if text != 'equipment_symbol':
             if self.textConfirm() == QMessageBox().Yes:
                 self.setItem(self.clicked_row, self.clicked_col, QTableWidgetItem(text))
-                print(text)
 
     def edit_cell(self):
         if self.IsInitialized:
