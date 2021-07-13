@@ -180,4 +180,13 @@ class GraphicsScene(QGraphicsScene):
         self.removeItem(self.graphicsPixmapItem)
         self.graphicsPixmapItem = QGraphicsPixmapItem(self.mapImg)
         self.addItem(self.graphicsPixmapItem)
-        self.mapImg.save('./icon_img/EditImg.png', 'png')
+        self.save_file()
+
+    def save_file(self):
+        label = QLabel()
+        label.setPixmap(self.mapImg)
+        fileSave = QFileDialog.getSaveFileName(label, 'Save Image', '','PNG(*.png)')
+        if fileSave[0]:
+            self.mapImg.save(fileSave[0])
+
+
