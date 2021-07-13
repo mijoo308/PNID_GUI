@@ -310,8 +310,11 @@ class TableView(QTableWidget):
         self.category.setModel(model)
         view = QTreeView()
         self.category.setView(view)
-        view.setColumnWidth(0, 500)
+        view.setColumnWidth(0, 400)
         view.expandAll()
+        view.horizontalScrollBar().setEnabled(True)
+        view.setAutoScroll(False)
+        view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setCellWidget(self.clicked_row, self.clicked_col, self.category)
 
     def textConfirm(self):
