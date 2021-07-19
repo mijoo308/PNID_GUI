@@ -216,7 +216,7 @@ class TableView(QTableWidget):
         self.setRowCount(table_size)
         self.setColumnCount(8)
         self.setHorizontalHeaderLabels(
-            ["v", "type", "text", "xmin", "ymin", "xmax", "ymax", "orientation"])
+            ["v", "type", "class", "xmin", "ymin", "xmax", "ymax", "orientation"])
 
         '''check box'''
         self.checkBoxList = []
