@@ -52,7 +52,7 @@ class MainWindow(QMainWindow):
 
     def createActions(self):
         self.openImgFileAction = QAction(QIcon('./icon_img/file.png'), '시작하기')
-        self.openImgFileAction.triggered.connect(self.openFileDialog)
+        self.openImgFileAction.triggered.connect(self.openImgDialog)
         self.openXmlFileAction = QAction(QIcon('./icon_img/xml.png'), 'xml 파일')
         self.openXmlFileAction.triggered.connect(self.openFileDialog)
         self.folderAction = QAction(QIcon('./icon_img/folder.png'), 'folder', self)
@@ -95,11 +95,45 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self, 'Information', '알림\n\n최대한 도면 영역만을 선택해주십시오.\n(우클릭으로 선택)',
                                 QMessageBox.Ok, QMessageBox.Ok)
 
+    def openImgDialog(self):
+        self.dialog = QDialog()
+        self.dialog.setWindowTitle('도면 인식 시작하기')
+        self.dialog.setGeometry(300, 100, 600, 300)
+        self.dialog.setFixedSize(600, 300)
+
+        self.dialog.imgLabel = QLabel('도면 입력', self.dialog)
+        self.dialog.imgLabel.move(20, 10)
+
+        '''Dot Button'''
+        self.dialog.dotBtn1 = QPushButton('...', self.dialog)
+        self.dialog.dotBtn1.resize(33, 22)
+        self.dialog.dotBtn1.move(523, 9)
+        self.dialog.dotBtn1.clicked.connect(self.imgDotBtnClick)
+
+        '''File Path'''
+        self.dialog.imgSource = QLineEdit(self.dialog)
+        self.dialog.imgSource.resize(300, 20)
+        self.dialog.imgSource.move(225, 10)
+        self.dialog.imgSource.setReadOnly(True)
+        self.dialog.imgSource.setPlaceholderText('도면 파일 경로')
+
+        self.dialog.path = QTextEdit(self.dialog)
+        self.dialog.path.resize(550, 180)
+        self.dialog.path.move(20, 60)
+        self.dialog.path.append('File Path')
+
+        '''Confirm button'''
+        self.dialog.confirm = QPushButton('OK', self.dialog)
+        self.dialog.confirm.move(480, 250)
+        self.dialog.confirm.clicked.connect(self.imgOkBtnClick)
+
+        self.dialog.show()
+
     def openFileDialog(self):
         self.dialog = QDialog()
 
         '''Import file window'''
-        self.dialog.setWindowTitle('이미지 도면 인식 시작 하기')
+        self.dialog.setWindowTitle('xml 수정하기')
         self.dialog.setGeometry(300, 100, 600, 300)
         self.dialog.setFixedSize(600, 300)
 
@@ -140,16 +174,20 @@ class MainWindow(QMainWindow):
         '''Confirm button'''
         self.dialog.confirm = QPushButton('OK', self.dialog)
         self.dialog.confirm.move(480, 250)
-        self.dialog.confirm.clicked.connect(self.btnClick)
+        self.dialog.confirm.clicked.connect(self.xmlOkBtnClick)
 
         self.dialog.show()
 
-    def btnClick(self):
+    def xmlOkBtnClick(self):
         # imgView = ImgView()
         # self.ScrollableImgArea.uploadImg(resize_ratio=0.2, filePath=self.imgFilePath[0])
         self.createImgViewer()
         self.dialog.close()
         self.callMappedArea()  # 테스트 해보려구 넣은 명려문 나중에 다른 곳으로 옮겨야 함
+
+    def imgOkBtnClick(self):
+        self.createImgViewer()
+        self.dialog.close()
 
     def callMappedArea(self):
         self.subwindow = MappedWindow(img=self.imgFilePath[0], xml=self.xmlFilePath[0])
