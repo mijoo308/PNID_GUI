@@ -9,6 +9,7 @@ from MappedWindow import *
 from ImgView import *
 from ImgListView import *
 import editMap
+import testSrc.run_easyTess
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -61,7 +62,11 @@ class MainWindow(QMainWindow):
         self.icon1ImgAction = QAction(QIcon('./icon_img/icon1.png'), ' ', self)
         self.preprocessImgAction = QAction(QIcon('./Icon_img/pre.png'), '원본도면 전처리')
         self.preprocessImgAction.triggered.connect(self.preprocessImg)
-        self.recogImgAction = QAction(QIcon('./Icon_img/cognition.png'), '도면 객체 인식', self)
+        self.recogImgAction = QAction(QIcon('./Icon_img/cognition.png'), '도면 객체 인식')
+        self.recogImgAction.triggered.connect(self.recogImg)
+
+    def recogImg(self):
+        testSrc.run_easyTess.run()
 
     def preprocessImg(self):
         self.enableToolBtn()

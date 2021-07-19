@@ -285,202 +285,195 @@ def RecognizeEasyBoxes(easybox_path, resized_im, result_root):
     f_write.close()
 
 # -------- main ----------------------------------------------------------------------------
-start = time.time()
 
-# set cb parameter
-cb.sizeForCrop = CROP_SIZE
-cb.sizeForStride = STRIDE_SIZE
+def run():
+    start = time.time()
 
-path_for_img_size = ''
-for file in os.listdir(img_dir):
-    if file.endswith('.jpg') or file.endswith('.png'):
+    # set cb parameter
+    cb.sizeForCrop = CROP_SIZE
+    cb.sizeForStride = STRIDE_SIZE
+
+    path_for_img_size = ''
+    for file in os.listdir(img_dir):
+        if file.endswith('.jpg') or file.endswith('.png'):
             path_for_img_size = os.path.join(img_dir, file)
             break
 
-im = cv2.imread(path_for_img_size)
-DRAWING_HEIGHT = im.shape[0]  # coordinate transform 이랑 xml 만들기 위해
-DRAWING_WIDTH = im.shape[1]
+    im = cv2.imread(path_for_img_size)
+    DRAWING_HEIGHT = im.shape[0]  # coordinate transform 이랑 xml 만들기 위해
+    DRAWING_WIDTH = im.shape[1]
 
-cb.originWidth = DRAWING_WIDTH
-cb.originHeight = DRAWING_HEIGHT
+    cb.originWidth = DRAWING_WIDTH
+    cb.originHeight = DRAWING_HEIGHT
 
+    original_img_list = []
+    # cb.make_rotated_img(img_dir)
+    cb.crop_big_image(result_dir_for_each_test, img_dir)  # data Crop
+    resized_img_list = []
 
-original_img_list = []
-# cb.make_rotated_img(img_dir)
-cb.crop_big_image(result_dir_for_each_test, img_dir)  # data Crop
-resized_img_list = []
+    subTxtResultDir_List = []  # to merge the result
 
-subTxtResultDir_List = []  # to merge the result
+    print("Detecting...")
+    for foldername in os.listdir(img_dir):  # ./data
+        subImgDir = os.path.join(img_dir, foldername)
 
-print("Detecting...")
-for foldername in os.listdir(img_dir):  # ./data
-    subImgDir = os.path.join(img_dir, foldername)
+        if os.path.isdir(subImgDir):
 
-    if os.path.isdir(subImgDir):
+            subTxtResultDir = os.path.join(result_dir_for_each_test, foldername + '_txt')
+            subImgResultDir = os.path.join(result_dir_for_each_test, foldername)
+            subTxtResultDir_List.append(
+                subTxtResultDir)  # ['KNU-A-22300-001-01_txt', KNU-A-22300-001-03_txt']  _txt 폴더들
 
-        subTxtResultDir = os.path.join(result_dir_for_each_test, foldername + '_txt')
-        subImgResultDir = os.path.join(result_dir_for_each_test, foldername)
-        subTxtResultDir_List.append(subTxtResultDir)  # ['KNU-A-22300-001-01_txt', KNU-A-22300-001-03_txt']  _txt 폴더들
+            os.mkdir(subTxtResultDir)
+            # os.mkdir(subImgResultDir)
 
-        os.mkdir(subTxtResultDir)
-        # os.mkdir(subImgResultDir)
+            for file in os.listdir(subImgDir):  # per subImg
 
-        for file in os.listdir(subImgDir):  # per subImg
+                fullCropImgFilePath = os.path.join(subImgDir, file)
+                cropImgName = os.path.basename(fullCropImgFilePath)
+                cropImgName = str(cropImgName.split('.')[0])
+                fullCropTxtFilePath = os.path.join(subTxtResultDir, cropImgName + ".txt")
 
+                im = PIL.Image.open(fullCropImgFilePath)
 
-            fullCropImgFilePath = os.path.join(subImgDir, file)
-            cropImgName = os.path.basename(fullCropImgFilePath)
-            cropImgName = str(cropImgName.split('.')[0])
-            fullCropTxtFilePath = os.path.join(subTxtResultDir, cropImgName + ".txt")
+                # Doing OCR. Get bounding boxes.
+                # bounds = reader.readtext(fullCropImgFilePath)
+                horizon_list, free_list = reader.detect(fullCropImgFilePath)
+                write_txt2(horizon_list, fullCropTxtFilePath)
 
-            im = PIL.Image.open(fullCropImgFilePath)
+        else:  # 그냥 도면 원본파일
+            original_img_list.append(subImgDir)
+            im = cv2.imread(subImgDir)
+            # resizedIm = cv2.resize(im, dsize=(resizedWidth, resizedHeight))
+            resized_img_list.append(im)
 
-            # Doing OCR. Get bounding boxes.
-            # bounds = reader.readtext(fullCropImgFilePath)
-            horizon_list, free_list = reader.detect(fullCropImgFilePath)
-            write_txt2(horizon_list, fullCropTxtFilePath)
+    # --- merge ---
+    print("Merging detected boxes...")
+    for subTxtResultDir in subTxtResultDir_List:
+        cb.merge_result(subTxtResultDir, result_dir_for_each_test)
 
-    else:  # 그냥 도면 원본파일
-        original_img_list.append(subImgDir)
-        im = cv2.imread(subImgDir)
-        # resizedIm = cv2.resize(im, dsize=(resizedWidth, resizedHeight))
-        resized_img_list.append(im)
+    # -- recognize with Tesseract----------
+    print("Recognizing...")
+    merged_text_list = []
+    for file in os.listdir(result_dir_for_each_test):
+        if file.endswith(".txt"):
+            merged_text_list.append(os.path.join(result_dir_for_each_test, file))
 
+    for merged_text_path, resizedIm in zip(merged_text_list, resized_img_list):
+        RecognizeEasyBoxes(merged_text_path, resizedIm, result_dir_for_each_test)
 
-# --- merge ---
-print("Merging detected boxes...")
-for subTxtResultDir in subTxtResultDir_List:
-    cb.merge_result(subTxtResultDir, result_dir_for_each_test)
+    # --------------- save result with IOU & confidence --------------
 
-# -- recognize with Tesseract----------
-print("Recognizing...")
-merged_text_list = []
-for file in os.listdir(result_dir_for_each_test):
-    if file.endswith(".txt"):
-        merged_text_list.append(os.path.join(result_dir_for_each_test, file))
+    if CALC_IOU:
+        origin_result_list = []  # ['KNU-A-22300-001-04-rotated_origin_result.txt']
+        rotated_result_list = []  # ['KNU-A-22300-001-04_origin_result.txt']
 
-for merged_text_path, resizedIm in zip(merged_text_list, resized_img_list):
-    RecognizeEasyBoxes(merged_text_path, resizedIm, result_dir_for_each_test)
+        for file in os.listdir(result_dir_for_each_test):
+            if file.endswith("origin_result.txt"):
+                if file.endswith("rotated_origin_result.txt"):
+                    rotated_result_list.append(str(os.path.join(result_dir_for_each_test, file)))
+                else:
+                    origin_result_list.append(str(os.path.join(result_dir_for_each_test, file)))
 
+        for origin_result, rotated_result in zip(origin_result_list, rotated_result_list):  # per drawing
+            o_read = open(origin_result, 'r', encoding='UTF8')
+            r_read = open(rotated_result, 'r', encoding='UTF8')
+            o_lines = o_read.readlines()
+            r_lines = r_read.readlines()
+            o_read.close()
+            r_read.close()
 
-#--------------- save result with IOU & confidence --------------
+            intersect_txt_name = str(os.path.basename(origin_result).split('_')[0]) + '_final_result.txt'
+            intersect_txt_path = os.path.join(result_dir_for_each_test, intersect_txt_name)
+            w_file = open(intersect_txt_path, 'w', encoding='UTF8')
+            # origin_result
 
-if CALC_IOU:
-    origin_result_list = []  # ['KNU-A-22300-001-04-rotated_origin_result.txt']
-    rotated_result_list = []  # ['KNU-A-22300-001-04_origin_result.txt']
+            origin_box_result = []
+            origin_text_result = []
+            for line in o_lines:
+                result = line.split('ㅣ')
+                print(result)
+                origin_box_result.append([int(result[0]), int(result[1]), int(result[2]), int(result[3]),
+                                          int(result[6])])  # xmin, ymin, xmax, ymax, confidence
+                origin_text_result.append(str(result[4]))
+
+            rotated_box_result = []
+            rotated_text_result = []
+            for line in r_lines:
+                result = line.split('ㅣ')
+                rotated_box_result.append([int(result[0]), int(result[1]), int(result[2]), int(result[3]),
+                                           int(result[6])])  # xmin, ymin, xmax, ymax, confidence
+                rotated_text_result.append(str(result[4]))
+
+            for resultText, resultBox in zip(origin_text_result, origin_box_result):
+                result = cb.IOU_fast(rotated_box_result, rotated_text_result, resultBox, resultText, IOU_THRESHOLD)
+
+                if result != None:
+                    w_file.write(result)
+                    k = result
+
+            w_file.close()
+
+    # -- visualize result ----
+    img_path_list = []
+    for file in os.listdir(result_dir_for_each_test):
+        if file.endswith(".jpg"):
+            if not file.endswith("rotated.jpg"):
+                img_path_list.append(os.path.join(result_dir_for_each_test, file))
+
+    # txt_result_list = []
+    # for file in os.listdir(result_dir_for_each_test):
+    #     if file.endswith("resized_result.txt"):
+    #         txt_result_list.append(os.path.join(result_dir_for_each_test, file))
+    #
+    # for txt_path in txt_result_list:
+    #     cb.return_to_original_size(exceptXpos, exceptYpos, txt_path, result_dir_for_each_test)
+
+    txt_origin_list = []
+    txt_iou_result_list = []
 
     for file in os.listdir(result_dir_for_each_test):
         if file.endswith("origin_result.txt"):
-            if file.endswith("rotated_origin_result.txt"):
-                rotated_result_list.append(str(os.path.join(result_dir_for_each_test, file)))
-            else:
-                origin_result_list.append(str(os.path.join(result_dir_for_each_test, file)))
+            txt_origin_list.append(os.path.join(result_dir_for_each_test, file))
 
-    for origin_result, rotated_result in zip(origin_result_list, rotated_result_list):  # per drawing
-        o_read = open(origin_result, 'r', encoding='UTF8')
-        r_read = open(rotated_result, 'r', encoding='UTF8')
-        o_lines = o_read.readlines()
-        r_lines = r_read.readlines()
-        o_read.close()
-        r_read.close()
+    if CALC_IOU:
+        for file in os.listdir(result_dir_for_each_test):
+            if file.endswith("final_result.txt"):
+                txt_iou_result_list.append(str(os.path.join(result_dir_for_each_test, file)))
 
-        intersect_txt_name = str(os.path.basename(origin_result).split('_')[0]) + '_final_result.txt'
-        intersect_txt_path = os.path.join(result_dir_for_each_test, intersect_txt_name)
-        w_file = open(intersect_txt_path, 'w', encoding='UTF8')
-        # origin_result
+    # except
+    if CALC_IOU:
+        for txt_path in txt_iou_result_list:
+            # cb.except_selected_pos(padding_pos, infobox_pos, txt_path, result_dir_for_each_test)
+            cb.except_selected_pos(txt_path, result_dir_for_each_test)
 
-        origin_box_result = []
-        origin_text_result = []
-        for line in o_lines:
-            result = line.split('ㅣ')
-            print(result)
-            origin_box_result.append([int(result[0]), int(result[1]), int(result[2]), int(result[3]),
-                                      int(result[6])])  # xmin, ymin, xmax, ymax, confidence
-            origin_text_result.append(str(result[4]))
-
-        rotated_box_result = []
-        rotated_text_result = []
-        for line in r_lines:
-            result = line.split('ㅣ')
-            rotated_box_result.append([int(result[0]), int(result[1]), int(result[2]), int(result[3]),
-                                       int(result[6])])  # xmin, ymin, xmax, ymax, confidence
-            rotated_text_result.append(str(result[4]))
-
-        for resultText, resultBox in zip(origin_text_result, origin_box_result):
-            result = cb.IOU_fast(rotated_box_result, rotated_text_result, resultBox, resultText, IOU_THRESHOLD)
-
-            if result != None:
-                w_file.write(result)
-                k = result
-
-        w_file.close()
-
-
-
-# -- visualize result ----
-img_path_list = []
-for file in os.listdir(result_dir_for_each_test):
-    if file.endswith(".jpg"):
-        if not file.endswith("rotated.jpg"):
-            img_path_list.append(os.path.join(result_dir_for_each_test, file))
-
-# txt_result_list = []
-# for file in os.listdir(result_dir_for_each_test):
-#     if file.endswith("resized_result.txt"):
-#         txt_result_list.append(os.path.join(result_dir_for_each_test, file))
-#
-# for txt_path in txt_result_list:
-#     cb.return_to_original_size(exceptXpos, exceptYpos, txt_path, result_dir_for_each_test)
-
-txt_origin_list = []
-txt_iou_result_list = []
-
-for file in os.listdir(result_dir_for_each_test):
-    if file.endswith("origin_result.txt"):
-        txt_origin_list.append(os.path.join(result_dir_for_each_test, file))
-
-if CALC_IOU:
-    for file in os.listdir(result_dir_for_each_test):
-        if file.endswith("final_result.txt"):
-            txt_iou_result_list.append(str(os.path.join(result_dir_for_each_test, file)))
-
-
-# except
-if CALC_IOU:
-    for txt_path in txt_iou_result_list:
+    for txt_path in txt_origin_list:
         # cb.except_selected_pos(padding_pos, infobox_pos, txt_path, result_dir_for_each_test)
         cb.except_selected_pos(txt_path, result_dir_for_each_test)
 
-for txt_path in txt_origin_list:
-    # cb.except_selected_pos(padding_pos, infobox_pos, txt_path, result_dir_for_each_test)
-    cb.except_selected_pos(txt_path, result_dir_for_each_test)
+    # txt_origin_list = []
+    # for file in os.listdir(result_dir_for_each_test):
+    #     if file.endswith("origin_result.txt"):
+    #         txt_origin_list.append(str(os.path.join(result_dir_for_each_test, file)))
 
+    jpg_origin_list = []
+    for file in os.listdir(result_dir_for_each_test):
+        if file.endswith(".jpg"):
+            jpg_origin_list.append(str(os.path.join(result_dir_for_each_test, file)))
 
-# txt_origin_list = []
-# for file in os.listdir(result_dir_for_each_test):
-#     if file.endswith("origin_result.txt"):
-#         txt_origin_list.append(str(os.path.join(result_dir_for_each_test, file)))
+    print("Drawing result...")
+    for txt_path, img_path in zip(txt_iou_result_list, img_path_list):
+        im = Image.open(img_path)
+        draw_merged_result(im, txt_path, result_dir_for_each_test)
 
-jpg_origin_list = []
-for file in os.listdir(result_dir_for_each_test):
-    if file.endswith(".jpg"):
-        jpg_origin_list.append(str(os.path.join(result_dir_for_each_test, file)))
+    for txt_path, img_path in zip(txt_origin_list, jpg_origin_list):
+        im = Image.open(img_path)
+        draw_merged_result(im, txt_path, result_dir_for_each_test)
 
-print("Drawing result...")
-for txt_path, img_path in zip(txt_iou_result_list, img_path_list):
-    im = Image.open(img_path)
-    draw_merged_result(im, txt_path, result_dir_for_each_test)
+    # -- make xml----
+    print("Making xml...")
+    cb.makeXML(DRAWING_WIDTH, DRAWING_HEIGHT, result_dir_for_each_test, img_dir)
 
-for txt_path, img_path in zip(txt_origin_list, jpg_origin_list):
-    im = Image.open(img_path)
-    draw_merged_result(im, txt_path, result_dir_for_each_test)
-
-
-
-# -- make xml----
-print("Making xml...")
-cb.makeXML(DRAWING_WIDTH, DRAWING_HEIGHT, result_dir_for_each_test, img_dir)
-
-print("time: ", time.time() - start)
+    print("time: ", time.time() - start)
 
 
