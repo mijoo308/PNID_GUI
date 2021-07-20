@@ -313,16 +313,16 @@ class TableView(QTableWidget):
 
     def editText(self, text):
         print(text)
-        if text == "['equipment_symbol']":
+        if text == ['equipment_symbol']:
             print("equip")
             self.setCellWidget(self.clicked_row, self.clicked_col, self.equipment)
             self.equipmentType()
 
-        elif text == "['pipe_symbol']":
+        elif text == ['pipe_symbol']:
             print("pipe")
             self.setCellWidget(self.clicked_row, self.clicked_col, self.pipe)
             self.pipeType()
-        elif text == "['instrument_symbol']":
+        elif text == ['instrument_symbol']:
             print("instrument")
             self.setCellWidget(self.clicked_row, self.clicked_col, self.instrument)
             self.instrumentType()
