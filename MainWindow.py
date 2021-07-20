@@ -58,12 +58,21 @@ class MainWindow(QMainWindow):
         self.openXmlFileAction.triggered.connect(self.openFileDialog)
         self.folderAction = QAction(QIcon('./icon_img/folder.png'), 'folder', self)
         self.saveAction = QAction(QIcon('./icon_img/save.png'), 'save', self)
+        self.saveAction.triggered.connect(self.save_file)
         self.dotAction = QAction(QIcon('./icon_img/dotted.png'), ' ', self)
         self.icon1ImgAction = QAction(QIcon('./icon_img/icon1.png'), ' ', self)
         self.preprocessImgAction = QAction(QIcon('./Icon_img/pre.png'), '원본도면 전처리')
         self.preprocessImgAction.triggered.connect(self.preprocessImg)
         self.recogImgAction = QAction(QIcon('./Icon_img/cognition.png'), '도면 객체 인식')
         self.recogImgAction.triggered.connect(self.recogImg)
+
+    def save_file(self):
+        label = QLabel()
+        label.setPixmap(self.imgArea.scene.mapImg)
+        fileSave = QFileDialog.getSaveFileName(label, 'Save Image', '', 'PNG(*.png)')
+        if fileSave[0]:
+            self.imgArea.scene.mapImg.save(fileSave[0])
+
 
     def recogImg(self):
         print('recog') #

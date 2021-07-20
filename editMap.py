@@ -88,8 +88,8 @@ class GraphicsScene(QGraphicsScene):
         self.OUTLINE_FIELD_COLOR = QColor(150, 38, 23, 50)
 
     def set_image(self, img_path):
-        self.img = QPixmap(img_path)
-        self.graphicsPixmapItem = QGraphicsPixmapItem(self.img)
+        self.mapImg = QPixmap(img_path)
+        self.graphicsPixmapItem = QGraphicsPixmapItem(self.mapImg)
         self.addItem(self.graphicsPixmapItem)
 
     def exceptFieldConfirm(self):
@@ -159,10 +159,10 @@ class GraphicsScene(QGraphicsScene):
         y = int(self.outlineRegion.y())
         width = int(self.outlineRegion.width())
         height = int(self.outlineRegion.height())
-        input = self.img.copy(x, y, width, height)
-        mapImg = QPixmap(input.size())
-        mapImg.fill(Qt.transparent)
-        painter = QPainter(mapImg)
+        input = self.mapImg.copy(x, y, width, height)
+        img = QPixmap(input.size())
+        img.fill(Qt.transparent)
+        painter = QPainter(img)
         painter.setOpacity(0.999)
         painter.drawPixmap(0, 0, input)
         painter.end()
@@ -170,7 +170,7 @@ class GraphicsScene(QGraphicsScene):
         if not os.path.isdir(self.save_dir):
             os.mkdir(self.save_dir)
         self.full_save_path = self.save_dir + '/convertPNG.png'
-        mapImg.save(self.full_save_path, 'png')
+        img.save(self.full_save_path, 'png')
         self.mapImg = QPixmap(self.full_save_path)
         self.clear()
         self.graphicsPixmapItem = QGraphicsPixmapItem(self.mapImg)
@@ -184,13 +184,6 @@ class GraphicsScene(QGraphicsScene):
         self.removeItem(self.graphicsPixmapItem)
         self.graphicsPixmapItem = QGraphicsPixmapItem(self.mapImg)
         self.addItem(self.graphicsPixmapItem)
-        self.save_file()
-
-    def save_file(self):
-        label = QLabel()
-        label.setPixmap(self.mapImg)
-        fileSave = QFileDialog.getSaveFileName(label, 'Save Image', '','PNG(*.png)')
-        if fileSave[0]:
-            self.mapImg.save(fileSave[0])
+        #self.save_file()
 
 
