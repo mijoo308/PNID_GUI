@@ -288,6 +288,9 @@ class TableView(QTableWidget):
         if self.clicked_col == 1:
             self.setCellWidget(self.clicked_row, self.clicked_col, self.type)
             self.setItem(self.clicked_row, self.clicked_col, QTableWidgetItem(self.type.currentText()))
+        elif self.clicked_col == 2:
+            type = self.getTableCell(i=self.clicked_row, j=1)
+            self.editText(text=type)
         self.on_selected(self.clicked_row)
 
     def makeTextComboBox(self):
@@ -307,6 +310,24 @@ class TableView(QTableWidget):
             elif line[0:i] == 'instrument_symbol':
                 self.instrument.addItem(line[i + 1:j])
 
+
+    def editText(self, text):
+        print(text)
+        if text == "['equipment_symbol']":
+            print("equip")
+            self.setCellWidget(self.clicked_row, self.clicked_col, self.equipment)
+            self.equipmentType()
+
+        elif text == "['pipe_symbol']":
+            print("pipe")
+            self.setCellWidget(self.clicked_row, self.clicked_col, self.pipe)
+            self.pipeType()
+        elif text == "['instrument_symbol']":
+            print("instrument")
+            self.setCellWidget(self.clicked_row, self.clicked_col, self.instrument)
+            self.instrumentType()
+
+
     def selectText(self, text):
         if text == 'equipment_symbol':
             self.setCellWidget(self.clicked_row, self.clicked_col + 1, self.equipment)
@@ -316,6 +337,7 @@ class TableView(QTableWidget):
 
         elif text == 'instrument_symbol':
             self.setCellWidget(self.clicked_row, self.clicked_col + 1, self.instrument)
+
 
     def editType(self):
         type = str(self.type.currentText())
