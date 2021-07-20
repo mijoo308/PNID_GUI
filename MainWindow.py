@@ -9,7 +9,7 @@ from MappedWindow import *
 from ImgView import *
 from ImgListView import *
 import editMap
-import testSrc.run_easyTess
+# import testSrc.run_easyTess
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -66,7 +66,7 @@ class MainWindow(QMainWindow):
         self.recogImgAction.triggered.connect(self.recogImg)
 
     def recogImg(self):
-        testSrc.run_easyTess.run()
+        print('recog') #
 
     def preprocessImg(self):
         self.enableToolBtn()
