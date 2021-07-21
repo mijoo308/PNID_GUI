@@ -289,7 +289,7 @@ class TableView(QTableWidget):
     def double_click(self):
         index = (self.selectionModel().currentIndex())
         self.double_row = index.row()
-        self.double_col = index.col()
+        self.double_col = index.column()
 
         if self.double_col == 1:
             self.setCellWidget(self.double_row, self.double_col, self.type)
@@ -332,13 +332,13 @@ class TableView(QTableWidget):
 
     def selectText(self, text):
         if text == 'equipment_symbol':
-            self.setCellWidget(self.double_row, self.double_col + 1, self.equipment)
+            self.setCellWidget(self.double_row, 2, self.equipment)
 
         elif text == 'pipe_symbol':
-            self.setCellWidget(self.double_row, self.double_col + 1, self.pipe)
+            self.setCellWidget(self.double_row, 2, self.pipe)
 
         elif text == 'instrument_symbol':
-            self.setCellWidget(self.double_row, self.double_col + 1, self.instrument)
+            self.setCellWidget(self.double_row, 2, self.instrument)
 
 
     def editType(self):
