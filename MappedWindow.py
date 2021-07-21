@@ -181,6 +181,7 @@ class TableView(QTableWidget):
         self.setSelectionBehavior(QAbstractItemView.SelectItems)  # column값 필요해서 items로 바꿈
         self.IsInitialized = False  # itemChanged 때문에
         self.cellClicked.connect(self.cell_click)  # cellClick 이벤트를 감지하면 cell_click 함수를 실행
+        self.doubleClicked.connect(self.double_click)
         self.itemChanged.connect(self.edit_cell)
         self.setStyleSheet("selection-background-color : #c1c5ff;" "selection-color : black;")
         self.type = QComboBox()
@@ -280,18 +281,22 @@ class TableView(QTableWidget):
 
     def cell_click(self):
         self.clicked_row = (self.selectedIndexes())[0].row()
-        index = (self.selectionModel().currentIndex())
-        self.clicked_col = index.column()
-        print(self.clicked_row, self.clicked_col, 'clicked')  # Test
+        #self.clicked_col = index.column()
+        print(self.clicked_row, 'clicked')  # Test
         print(self.getTableCell(self.clicked_row))  # Test
-
-        if self.clicked_col == 1:
-            self.setCellWidget(self.clicked_row, self.clicked_col, self.type)
-            self.setItem(self.clicked_row, self.clicked_col, QTableWidgetItem(self.type.currentText()))
-        elif self.clicked_col == 2:
-            type = self.getTableCell(i=self.clicked_row, j=1)
-            self.editText(text=type)
         self.on_selected(self.clicked_row)
+
+    def double_click(self):
+        index = (self.selectionModel().currentIndex())
+        self.double_row = index.row()
+        self.double_col = index.col()
+
+        if self.double_col == 1:
+            self.setCellWidget(self.double_row, self.double_col, self.type)
+            self.setItem(self.double_row, self.double_col, QTableWidgetItem(self.type.currentText()))
+        elif self.double_col == 2:
+            type = self.getTableCell(i=self.double_row, j=1)
+            self.editText(text=type)
 
     def makeTextComboBox(self):
         self.equipment = QComboBox()
@@ -314,34 +319,31 @@ class TableView(QTableWidget):
     def editText(self, text):
         print(text)
         if text == ['equipment_symbol']:
-            print("equip")
-            self.setCellWidget(self.clicked_row, self.clicked_col, self.equipment)
+            self.setCellWidget(self.double_row, self.double_col, self.equipment)
             self.equipmentType()
 
         elif text == ['pipe_symbol']:
-            print("pipe")
-            self.setCellWidget(self.clicked_row, self.clicked_col, self.pipe)
+            self.setCellWidget(self.double_row, self.double_col, self.pipe)
             self.pipeType()
         elif text == ['instrument_symbol']:
-            print("instrument")
-            self.setCellWidget(self.clicked_row, self.clicked_col, self.instrument)
+            self.setCellWidget(self.double_row, self.double_col, self.instrument)
             self.instrumentType()
 
 
     def selectText(self, text):
         if text == 'equipment_symbol':
-            self.setCellWidget(self.clicked_row, self.clicked_col + 1, self.equipment)
+            self.setCellWidget(self.double_row, self.double_col + 1, self.equipment)
 
         elif text == 'pipe_symbol':
-            self.setCellWidget(self.clicked_row, self.clicked_col + 1, self.pipe)
+            self.setCellWidget(self.double_row, self.double_col + 1, self.pipe)
 
         elif text == 'instrument_symbol':
-            self.setCellWidget(self.clicked_row, self.clicked_col + 1, self.instrument)
+            self.setCellWidget(self.double_row, self.double_col + 1, self.instrument)
 
 
     def editType(self):
         type = str(self.type.currentText())
-        self.setItem(self.clicked_row, self.clicked_col, QTableWidgetItem(type))
+        self.setItem(self.double_row, self.double_col, QTableWidgetItem(type))
         self.selectText(text=type)
         if type == 'equipment_symbol':
             self.equipmentType()
@@ -352,15 +354,15 @@ class TableView(QTableWidget):
 
     def equipmentType(self):
         type = str(self.equipment.currentText())
-        self.setItem(self.clicked_row, 2, QTableWidgetItem(type))
+        self.setItem(self.double_row, 2, QTableWidgetItem(type))
 
     def pipeType(self):
         type = str(self.pipe.currentText())
-        self.setItem(self.clicked_row, 2, QTableWidgetItem(type))
+        self.setItem(self.double_row, 2, QTableWidgetItem(type))
 
     def instrumentType(self):
         type = str(self.instrument.currentText())
-        self.setItem(self.clicked_row, 2, QTableWidgetItem(type))
+        self.setItem(self.double_row, 2, QTableWidgetItem(type))
 
     def edit_cell(self):
         if self.IsInitialized:
