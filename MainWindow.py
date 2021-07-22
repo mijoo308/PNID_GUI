@@ -101,9 +101,12 @@ class MainWindow(QMainWindow):
         self.imgArea.selectActivate(flag='outline', state=True)
 
     def exceptFieldMessageBox(self):
-        QMessageBox.information(self, "Information", '알림\n\n최대한 표제 영역만을 선택해주십시오.\n(우클릭으로 선택)',
-                                QMessageBox.Ok, QMessageBox.Ok)
-        self.imgArea.selectActivate(flag='except', state=True)
+        if self.imgArea.scene.ready:
+            QMessageBox.information(self, "Information", '알림\n\n최대한 표제 영역만을 선택해주십시오.\n(우클릭으로 선택)',
+                                    QMessageBox.Ok, QMessageBox.Ok)
+            self.imgArea.selectActivate(flag='except', state=True)
+        elif not self.imgArea.scene.ready:
+            QMessageBox.warning(self, 'Warning', 'Warning\n\n외곽 영역을 먼저 선택해주십시오.', QMessageBox.Ok, QMessageBox.Ok)
 
     def mapFieldMessageBox(self):
         QMessageBox.information(self, 'Information', '알림\n\n최대한 도면 영역만을 선택해주십시오.\n(우클릭으로 선택)',

@@ -78,6 +78,7 @@ class GraphicsScene(QGraphicsScene):
         super().__init__()
         self.exceptActive = False
         self.outlineActive = False
+        self.ready = False
 
         self._start = QPointF()
         self._current_rect_item = None
@@ -150,6 +151,7 @@ class GraphicsScene(QGraphicsScene):
                 self.removeItem(self._current_rect_item)
                 if self.outlineReply == QMessageBox.Yes:
                     self.outline()
+                    self.ready = True
                     self._current_rect_item = None
                     self.outlineActive = False
         super(GraphicsScene, self).mouseReleaseEvent(event)
