@@ -116,7 +116,10 @@ class MappedWindow(QMainWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockingWidget)
 
     def saveToXmlBtnClicked(self):
-        self.tab1_table.saveXML(self.IMG_NAME)
+        file_save = QFileDialog.getSaveFileName(None, 'Save XML', '', 'XML(*.xml)')
+        if file_save[0]:
+            file_name = os.path.basename(file_save[0])
+            self.tab1_table.saveXML(file_name)
 
     def deleteBoxBtnClicked(self):
         self.tab1_table.delete_cell()  # layerView에서 박스 삭제 필요

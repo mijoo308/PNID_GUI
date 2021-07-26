@@ -39,7 +39,7 @@ def makeXML(Boxes, filename):
 
     indent(root)
     tree = ET.ElementTree(root)
-    tree.write(filename + '_fixed.xml')
+    tree.write(filename)
 
 
 def object_to_element(xml_obj, xml_type):
