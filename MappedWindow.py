@@ -187,6 +187,8 @@ class TableView(QTableWidget):
         self.doubleClicked.connect(self.double_click)
         self.itemChanged.connect(self.edit_cell)
         self.setStyleSheet("selection-background-color : #c1c5ff;" "selection-color : black;")
+        #self.connect(self.horizontalHeader(), SIGNAL("sectionClicked(int"), self.typeSort)
+        self.horizontalHeader().sectionClicked.connect(self.typeSort)
         self.type = QComboBox()
         self.type.addItem('text')
         self.type.addItem('equipment_symbol')
@@ -250,6 +252,11 @@ class TableView(QTableWidget):
     #     self.printLabel(value)
     #     self.logLabel(value)
 
+    def typeSort(self, idx):
+        if idx == 1:
+            self.setSortingEnabled(True)
+            self.sortItems(1, Qt.AscendingOrder)
+            #self.sortItems(1, Qt.DescendingOrder)
 
     def setTableCell(self, newData, i):
         self.setCellWidget(i, 0, self.checkBoxList[i])
