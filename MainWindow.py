@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import sys
-
 from PyQt5.QtWidgets import *
 
 from PyQt5.QtGui import QIcon
@@ -11,8 +10,7 @@ from MappedWindow import *
 from ImgView import *
 from ImgListView import *
 import editMap
-import subprocess
-# import testSrc.run_easyTess
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -78,11 +76,11 @@ class MainWindow(QMainWindow):
 
 
     def recogImg(self):
+        print('recogImg called')
         recog_img_name = os.path.basename(self.imgFilePath[0])
         recog_img_path = os.path.join('./data', recog_img_name)
         self.imgArea.scene.mapImg.save(recog_img_path)
-
-        exec(open('./testSrc/run_easyTess.py', encoding="utf-8").read())
+        exec(open(r'C:\Users\master\Desktop\PNID_GUI\testSrc\run_easyTess.py', encoding="utf-8").read(), globals())
 
     def preprocessImg(self):
         self.enableToolBtn()
