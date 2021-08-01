@@ -186,7 +186,8 @@ class GraphicsScene(QGraphicsScene):
 
         if self.isExistingBox: # 존재하는 박스 클릭 시
             self.selectedItem = self.itemAt(event.scenePos(), QTransform())
-            self.on_selected(self.selectedItem.tableIndex)
+            self.on_selected(self.bndBoxList.index(self.selectedItem))
+
             self.changeSelectedItemColor(self.selectedItem)
             # QGraphicsItem.mousePressEvent(self.selectedItem, event)
 
@@ -224,7 +225,7 @@ class GraphicsScene(QGraphicsScene):
 class BoundingBox(QGraphicsRectItem):
     def __init__(self, initialIndex, isInitData=True):
         super().__init__()
-        self.tableIndex = initialIndex
+        # self.tableIndex = initialIndex 안 씀
         self.isInitData = isInitData
 
 
