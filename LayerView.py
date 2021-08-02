@@ -25,9 +25,13 @@ class LayerView(QGraphicsView):
         self.selectedIndex = None
         self.currentItem = None
 
-        self.DEFAULT_COLOR = QColor(255, 0, 0, 50)
+        self.TEXT_COLOR = QColor(255, 0, 0, 50)
+        self.SYMBOL_COLOR = QColor(255, 127, 0, 50)
+
+        # self.DEFAULT_COLOR = QColor(255, 0, 0, 50)
         self.SELECTED_COLOR = QColor(0, 0, 255, 50)
         self.NEWBOX_COLOR = QColor(0, 200, 0, 50)
+
 
         self.zoomInCnt = 0
         self.zoomOutCnt = 0
@@ -45,7 +49,13 @@ class LayerView(QGraphicsView):
         box_num = len(self.data)
         for box_index in range(box_num): # rect 객체 list 만들기
             box = BoundingBox(box_index)
-            box.setBrush(self.DEFAULT_COLOR)
+            if self.data[box_index][0] == 'text':
+                box.type = 0
+                box.setBrush(self.TEXT_COLOR)
+            else:
+                box.type = 1
+                box.setBrush(self.SYMBOL_COLOR)
+
             box.setFlag(QGraphicsItem.ItemIsSelectable, True)
             box.setFlag(QGraphicsItem.ItemIsMovable, False)
             # box.setFlag(QGraphicsItem.ItemIsFocusable, True)
@@ -72,7 +82,10 @@ class LayerView(QGraphicsView):
     def changeSelctedItemColor(self, item):
         if self.currentItem is not None:
             if self.currentItem.isInitData:
-                self.currentItem.setBrush(self.DEFAULT_COLOR)
+                if self.currentItem.type:
+                    self.currentItem.setBrush(self.SYMBOL_COLOR)
+                else:
+                    self.currentItem.setBrush(self.TEXT_COLOR)
             else:
                 self.currentItem.setBrush(self.NEWBOX_COLOR)
         self.currentItem = item
@@ -121,7 +134,10 @@ class LayerView(QGraphicsView):
     def redraw_box(self, i, new_row): # ?
         self.scene.removeItem(self.bndboxList[i])
         if self.bndboxList[i].isInitData:
-            self.bndboxList[i].setBrush(self.DEFAULT_COLOR)
+            if self.currentItem.type:
+                self.currentItem.setBrush(self.SYMBOL_COLOR)
+            else:
+                self.currentItem.setBrush(self.TEXT_COLOR)
         else:
             self.bndboxList[i].setBrush(self.NEWBOX_COLOR)
         self.bndboxList[i].setFlag(QGraphicsItem.ItemIsSelectable, True)
@@ -223,10 +239,11 @@ class GraphicsScene(QGraphicsScene):
 
 
 class BoundingBox(QGraphicsRectItem):
-    def __init__(self, initialIndex, isInitData=True):
+    def __init__(self, initialIndex, isInitData=True, type=None):
         super().__init__()
         # self.tableIndex = initialIndex 안 씀
         self.isInitData = isInitData
+        self.type = type # 0: Text / 1: Symbol
 
 
 class LayerViewModel:
