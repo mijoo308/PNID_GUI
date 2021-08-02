@@ -151,12 +151,12 @@ class MappedWindow(QMainWindow):
         self.tabview.tab1 = QWidget()
         self.createTab1UI()
 
-        self.tabview.tab2 = QWidget()
+        # self.tabview.tab2 = QWidget()
 
         self.tabview.tabs.resize(int(self.width() * 0.2), int(self.height()))
 
-        self.tabview.tabs.addTab(self.tabview.tab1, 'Labeled Objects')
-        self.tabview.tabs.addTab(self.tabview.tab2, 'Recognized Objects')
+        self.tabview.tabs.addTab(self.tabview.tab1, 'Recognized Objects')
+        # self.tabview.tabs.addTab(self.tabview.tab2, 'Recognized Objects')
 
         self.tabview.tabLayout.addWidget(self.tabview.tabs)
         self.tabview.setLayout(self.tabview.tabLayout)
