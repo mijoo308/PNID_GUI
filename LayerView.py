@@ -26,7 +26,7 @@ class LayerView(QGraphicsView):
         self.currentItem = None
 
         self.TEXT_COLOR = QColor(255, 0, 0, 50)
-        self.SYMBOL_COLOR = QColor(255, 127, 0, 50)
+        self.SYMBOL_COLOR = QColor(0, 255, 255, 50)
 
         # self.DEFAULT_COLOR = QColor(255, 0, 0, 50)
         self.SELECTED_COLOR = QColor(0, 0, 255, 50)
