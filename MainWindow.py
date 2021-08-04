@@ -10,6 +10,8 @@ from MappedWindow import *
 from ImgView import *
 from ImgListView import *
 import editMap
+import pathlib
+import shutil
 
 
 class MainWindow(QMainWindow):
@@ -76,11 +78,24 @@ class MainWindow(QMainWindow):
 
 
     def recogImg(self):
-        print('recogImg called')
+        img_dir = './data'
+        for file in os.listdir(img_dir):
+            if os.path.isdir(os.path.join(img_dir, file)):
+                shutil.rmtree(os.path.join(img_dir, file), ignore_errors=True)
+            else:
+                os.remove(str(os.path.join(img_dir, file)))
+
         recog_img_name = os.path.basename(self.imgFilePath[0])
         recog_img_path = os.path.join('./data', recog_img_name)
         self.imgArea.scene.mapImg.save(recog_img_path)
+        xml_name = str(recog_img_name.split('.')[0])
+
         exec(open(r'C:\Users\master\Desktop\PNID_GUI\testSrc\run_easyTess.py', encoding="utf-8").read(), globals())
+        xml_dir = max(pathlib.Path('./result').glob('*/'), key=os.path.getmtime)
+        xml_result_path = os.path.join(xml_dir, xml_name + '.xml')
+
+        self.callMappedArea(img_path=recog_img_path, xml_path=xml_result_path)
+
 
     def preprocessImg(self):
         self.enableToolBtn()
@@ -205,14 +220,14 @@ class MainWindow(QMainWindow):
         # self.ScrollableImgArea.uploadImg(resize_ratio=0.2, filePath=self.imgFilePath[0])
         self.createImgViewer()
         self.dialog.close()
-        self.callMappedArea()  # 테스트 해보려구 넣은 명려문 나중에 다른 곳으로 옮겨야 함
+        self.callMappedArea(img_path=self.imgFilePath[0], xml_path=self.xmlFilePath[0])  # 테스트 해보려구 넣은 명려문 나중에 다른 곳으로 옮겨야 함
 
     def imgOkBtnClick(self):
         self.createImgViewer()
         self.dialog.close()
 
-    def callMappedArea(self):
-        self.subwindow = MappedWindow(img=self.imgFilePath[0], xml=self.xmlFilePath[0])
+    def callMappedArea(self, img_path, xml_path):
+        self.subwindow = MappedWindow(img=img_path, xml=xml_path)
 
     def imgDotBtnClick(self):
         self.imgFilePath = QFileDialog.getOpenFileName(self, '열기', './', filter='*.jpg *.jpeg *.png')
