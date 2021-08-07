@@ -2,6 +2,7 @@ import os
 import sys
 import numpy as np
 from PyQt5.QtCore import QObject, pyqtSignal
+
 '''from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QDockWidget, QVBoxLayout, QTabWidget, QTableWidget, \
     QAbstractItemView, QCheckBox, QTableWidgetItem, QHeaderView, QPushButton, QAction, QComboBox, QStandardItemModel,\
     QTreeView'''
@@ -61,7 +62,6 @@ class MappedWindow(QMainWindow):
         self.layerViewModel = LayerViewModel(self.MODEL, self.layerView)  # 원본 데이터 채워져 있을 것
         self.setCentralWidget(self.layerView)
         self.show()
-
 
     def createMenubar(self):
         menuBar = self.menuBar()
@@ -187,7 +187,7 @@ class TableView(QTableWidget):
         self.doubleClicked.connect(self.double_click)
         self.itemChanged.connect(self.edit_cell)
         self.setStyleSheet("selection-background-color : #c1c5ff;" "selection-color : black;")
-        #self.connect(self.horizontalHeader(), SIGNAL("sectionClicked(int"), self.typeSort)
+        # self.connect(self.horizontalHeader(), SIGNAL("sectionClicked(int"), self.typeSort)
         self.horizontalHeader().sectionClicked.connect(self.typeSort)
         self.type = QComboBox()
         self.type.addItem('text')
@@ -200,7 +200,13 @@ class TableView(QTableWidget):
         self.pipe.currentIndexChanged.connect(self.pipeType)
         self.instrument.currentIndexChanged.connect(self.instrumentType)
 
-        # TODO: checkbox event 설정 필요
+        self.typeIndex = 0
+        self.classIndex = 1
+        self.xminIndex = 2
+        self.yminIndex = 3
+        self.xmaxIndex = 4
+        self.ymaxIndex = 5
+        self.degreeIndex = 6
 
         ''' signal to connect with ViewModel '''  # View Model에서 사용
 
@@ -220,32 +226,38 @@ class TableView(QTableWidget):
         self.data = self.get_data()
         table_size = len(self.data)
         self.setRowCount(table_size)
-        self.setColumnCount(8)
+        self.setColumnCount(7)
+
         self.setHorizontalHeaderLabels(
-            ["v", "type", "class", "xmin", "ymin", "xmax", "ymax", "orientation"])
+            ["type", "class", "xmin", "ymin", "xmax", "ymax", "degree"])
 
-        '''check box'''
-        self.checkBoxList = []
-        for i in range(table_size):
-            ckbox = QCheckBox()
-            self.checkBoxList.append(ckbox)
-        for i in range(table_size):
-            self.setCellWidget(i, 0, self.checkBoxList[i])
-            self.checkBoxList[i].setChecked(True)  # checked가 default
+        # '''check box'''
+        # self.checkBoxList = []
+        # for i in range(table_size):
+        #     ckbox = QCheckBox()
+        #     self.checkBoxList.append(ckbox)
+        for i in range(len(self.data)):
+            # self.setCellWidget(i, 0, self.checkBoxList[i])
+            # self.checkBoxList[i].setChecked(True)  # checked가 default
 
-            # 순서: type, string, xmin, ymin, xmax, ymax, orientation, visible
-            self.setItem(i, 1, QTableWidgetItem(self.data[i][0]))
-            self.setItem(i, 2, QTableWidgetItem(str(self.data[i][1])))
-            self.setItem(i, 3, QTableWidgetItem(str(self.data[i][2])))
-            self.setItem(i, 4, QTableWidgetItem(str(self.data[i][3])))
-            self.setItem(i, 5, QTableWidgetItem(str(self.data[i][4])))
-            self.setItem(i, 6, QTableWidgetItem(str(self.data[i][5])))
-            self.setItem(i, 7, QTableWidgetItem(str(self.data[i][6])))
+            # 순서: type, string, xmin, ymin, xmax, ymax, degree, visible
+            self.setItem(i, self.typeIndex, QTableWidgetItem(self.data[i][0]))
+            self.setItem(i, self.classIndex, QTableWidgetItem(str(self.data[i][1])))
+            self.setItem(i, self.xminIndex, QTableWidgetItem(str(self.data[i][2])))
+            self.setItem(i, self.yminIndex, QTableWidgetItem(str(self.data[i][3])))
+            self.setItem(i, self.xmaxIndex, QTableWidgetItem(str(self.data[i][4])))
+            self.setItem(i, self.ymaxIndex, QTableWidgetItem(str(self.data[i][5])))
+            self.setItem(i, self.degreeIndex, QTableWidgetItem(str(self.data[i][6])))
 
-        for i in range(8):
-            if i == 2:
+        for i in range(self.columnCount()):
+            if i == self.classIndex:
                 continue
             self.resizeColumnToContents(i)
+
+        # for i in range(self.rowCount()):
+        #     test = self.rowAt(i)
+        #     print(test)
+
 
     # def on_table_valueChanged(self, value):
     #     self.lcd.display(value)
@@ -253,35 +265,34 @@ class TableView(QTableWidget):
     #     self.logLabel(value)
 
     def typeSort(self, idx):
-        if idx == 1:
+        if idx == self.typeIndex:
             self.setSortingEnabled(True)
-            self.sortItems(1, Qt.AscendingOrder)
-            #self.sortItems(1, Qt.DescendingOrder)
+            self.sortItems(self.typeIndex, Qt.AscendingOrder)
+
+            # self.sortItems(1, Qt.DescendingOrder)
 
     def setTableCell(self, newData, i):
-        self.setCellWidget(i, 0, self.checkBoxList[i])
-        self.checkBoxList[i].setChecked(True)
-        self.setItem(i, 1, QTableWidgetItem(newData[0]))
-        self.setItem(i, 2, QTableWidgetItem(str(newData[1])))
-        self.setItem(i, 3, QTableWidgetItem(str(newData[2])))
-        self.setItem(i, 4, QTableWidgetItem(str(newData[3])))
-        self.setItem(i, 5, QTableWidgetItem(str(newData[4])))
-        self.setItem(i, 6, QTableWidgetItem(str(newData[5])))
-        self.setItem(i, 7, QTableWidgetItem(str(newData[6])))
+        # self.setCellWidget(i, 0, self.checkBoxList[i])
+        # self.checkBoxList[i].setChecked(True)
+        self.setItem(i, self.typeIndex, QTableWidgetItem(newData[0]))
+        self.setItem(i, self.classIndex, QTableWidgetItem(str(newData[1])))
+        self.setItem(i, self.xminIndex, QTableWidgetItem(str(newData[2])))
+        self.setItem(i, self.yminIndex, QTableWidgetItem(str(newData[3])))
+        self.setItem(i, self.xmaxIndex, QTableWidgetItem(str(newData[4])))
+        self.setItem(i, self.ymaxIndex, QTableWidgetItem(str(newData[5])))
+        self.setItem(i, self.degreeIndex, QTableWidgetItem(str(newData[6])))
 
     def addTableCell(self, addedData):
         row = self.rowCount()
         self.insertRow(row)
 
-        ckbox = QCheckBox()
-        self.checkBoxList.append(ckbox)
-        self.setTableCell(addedData, row)
+        self.setTableCell(newData=addedData, i=row)
         self.selectRow(row)
 
     def getTableCell(self, i, j=None):
         result = []
         if j is None:
-            for col in range(1, self.columnCount()):
+            for col in range(0, self.columnCount()):
                 result.append(self.item(i, col).text())
 
         else:
@@ -291,7 +302,7 @@ class TableView(QTableWidget):
 
     def cell_click(self):
         self.clicked_row = (self.selectedIndexes())[0].row()
-        #self.clicked_col = index.column()
+        # self.clicked_col = index.column()
         print(self.clicked_row, 'clicked')  # Test
         print(self.getTableCell(self.clicked_row))  # Test
         self.on_selected(self.clicked_row)
@@ -301,11 +312,11 @@ class TableView(QTableWidget):
         self.double_row = index.row()
         self.double_col = index.column()
 
-        if self.double_col == 1:
+        if self.double_col == self.typeIndex:
             self.setCellWidget(self.double_row, self.double_col, self.type)
             self.setItem(self.double_row, self.double_col, QTableWidgetItem(self.type.currentText()))
-        elif self.double_col == 2:
-            type = self.getTableCell(i=self.double_row, j=1)
+        elif self.double_col == self.classIndex:
+            type = self.getTableCell(i=self.double_row, j=self.classIndex)
             self.editText(text=type)
 
     def makeTextComboBox(self):
@@ -325,7 +336,6 @@ class TableView(QTableWidget):
             elif line[0:i] == 'instrument_symbol':
                 self.instrument.addItem(line[i + 1:j])
 
-
     def editText(self, text):
         print(text)
         if text == ['equipment_symbol']:
@@ -339,17 +349,15 @@ class TableView(QTableWidget):
             self.setCellWidget(self.double_row, self.double_col, self.instrument)
             self.instrumentType()
 
-
     def selectText(self, text):
         if text == 'equipment_symbol':
-            self.setCellWidget(self.double_row, 2, self.equipment)
+            self.setCellWidget(self.double_row, self.classIndex, self.equipment)
 
         elif text == 'pipe_symbol':
-            self.setCellWidget(self.double_row, 2, self.pipe)
+            self.setCellWidget(self.double_row, self.classIndex, self.pipe)
 
         elif text == 'instrument_symbol':
-            self.setCellWidget(self.double_row, 2, self.instrument)
-
+            self.setCellWidget(self.double_row, self.classIndex, self.instrument)
 
     def editType(self):
         type = str(self.type.currentText())
@@ -364,15 +372,15 @@ class TableView(QTableWidget):
 
     def equipmentType(self):
         type = str(self.equipment.currentText())
-        self.setItem(self.double_row, 2, QTableWidgetItem(type))
+        self.setItem(self.double_row, self.classIndex, QTableWidgetItem(type))
 
     def pipeType(self):
         type = str(self.pipe.currentText())
-        self.setItem(self.double_row, 2, QTableWidgetItem(type))
+        self.setItem(self.double_row, self.classIndex, QTableWidgetItem(type))
 
     def instrumentType(self):
         type = str(self.instrument.currentText())
-        self.setItem(self.double_row, 2, QTableWidgetItem(type))
+        self.setItem(self.double_row, self.classIndex, QTableWidgetItem(type))
 
     def edit_cell(self):
         if self.IsInitialized:
@@ -380,28 +388,28 @@ class TableView(QTableWidget):
                 edited_row_index = self.selectedIndexes()[0].row()
                 edited_row = self.getTableCell(edited_row_index)
 
-                if self.checkBoxList[edited_row_index].isChecked():
-                    edited_row.append(True)  # TODO: bool 타입으로 저장이 안되는 것 수정 필요
-                else:
-                    edited_row.append(False)
+                # if self.checkBoxList[edited_row_index].isChecked():
+                #     edited_row.append(True)  # TODO: bool 타입으로 저장이 안되는 것 수정 필요
+                # else:
+                #     edited_row.append(False)
 
                 # edited_row = np.array(edited_row)  # list type -> np  np제거
                 print(edited_row_index, 'changed')  # Test
-                if self.getTableCell(i=edited_row_index, j=1) == ['']:
-                    self.setItem(edited_row_index, 1, QTableWidgetItem('text'))
+                if self.getTableCell(i=edited_row_index, j=self.typeIndex) == ['']:
+                    self.setItem(edited_row_index, self.typeIndex, QTableWidgetItem('text'))
                 self.on_data_changed_from_view(edited_row_index, edited_row)  # row 단위로 업데이트
 
     def delete_cell(self):
         deleted_index = self.selectedIndexes()[0].row()
         self.removeRow(deleted_index)
-        del self.checkBoxList[deleted_index]
+        # del self.checkBoxList[deleted_index]
         self.on_deleted(deleted_index)
 
     def saveXML(self, filename):
         makeXML(self.get_data(), filename)
 
     def selectionChange(self, i):  # ViewModel에서 사용
-        self.setCurrentCell(i, 2)
+        self.setCurrentCell(i, self.classIndex)
 
 
 # ViewModel
@@ -491,6 +499,18 @@ class over_layer(QWidget):
                 height = ymax - ymin
                 qp.drawRect(xmin, ymin, width, height)  # x,y,width,height
         qp.drawRect(5, 5, 10, 10)
+
+
+class BoundingBox:
+    def __init__(self, data):
+        super().__init__()
+        self.type = data[0]
+        self.clss = data[1]
+        self.xmin = int(data[2])
+        self.ymin = int(data[3])
+        self.xmax = int(data[4])
+        self.ymax = int(data[5])
+        self.degree = int(data[6])
 
 
 # data

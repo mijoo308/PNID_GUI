@@ -10,12 +10,8 @@ def makeXML(Boxes, filename):
     root = ET.Element('annotation')
     ET.SubElement(root, 'filename').text = filename
 
-    # string, orientation, xmin, ymin, xmax, ymax, visible
+    # string, orientation, xmin, ymin, xmax, ymax
     for box in Boxes: #per Box
-        visible = box[-1]
-        if visible == '0': #TODO: bool 타입으로 저장이 안되는 것 수정 필요
-            print('false')
-            continue
 
         string = box[1]
         orientation = box[6]
@@ -81,9 +77,8 @@ def parseXML(xml_path, xml_type):
         object = 'symbol_object'
 
     for child in root.findall(object):
-        visible = True
         string, orientation, xmin, ymin, xmax, ymax, type = object_to_element(child, xml_type)
-        result.append([type, string, int(xmin), int(ymin), int(xmax), int(ymax), orientation, visible])  # add Visible
+        result.append([type, string, int(xmin), int(ymin), int(xmax), int(ymax), orientation])  # add Visible
 
     # result = np.array(result)  # np array 로 변환 # np제거
 
