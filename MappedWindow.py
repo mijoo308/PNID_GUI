@@ -208,6 +208,8 @@ class TableView(QTableWidget):
         self.ymaxIndex = 5
         self.degreeIndex = 6
 
+        self.current_row = None # to edit sorted cell
+
         ''' signal to connect with ViewModel '''  # View Model에서 사용
 
     def setSignal(self, on_data_changed_from_view, get_data_func, notify_selected_index, notify_deleted_index):
@@ -223,7 +225,7 @@ class TableView(QTableWidget):
     #     print(self.chaged_row, self.changed_col, self.changed_content)
 
     def setInitData(self):
-        self.data = self.get_data()
+        self.data = self.get_data().copy()
         table_size = len(self.data)
         self.setRowCount(table_size)
         self.setColumnCount(7)
@@ -236,7 +238,7 @@ class TableView(QTableWidget):
         # for i in range(table_size):
         #     ckbox = QCheckBox()
         #     self.checkBoxList.append(ckbox)
-        for i in range(len(self.data)):
+        for i in range(table_size):
             # self.setCellWidget(i, 0, self.checkBoxList[i])
             # self.checkBoxList[i].setChecked(True)  # checked가 default
 
@@ -268,6 +270,7 @@ class TableView(QTableWidget):
         if idx == self.typeIndex:
             self.setSortingEnabled(True)
             self.sortItems(self.typeIndex, Qt.AscendingOrder)
+            # self.setSortingEnabled(False)
 
             # self.sortItems(1, Qt.DescendingOrder)
 
@@ -283,10 +286,18 @@ class TableView(QTableWidget):
         self.setItem(i, self.degreeIndex, QTableWidgetItem(str(newData[6])))
 
     def addTableCell(self, addedData):
+        self.current_row = None
         row = self.rowCount()
         self.insertRow(row)
-
         self.setTableCell(newData=addedData, i=row)
+
+        added_row = addedData.copy()
+        for i in range(self.xminIndex, self.degreeIndex + 1):
+            added_row[i] = int(added_row[i])
+
+        print(added_row, 'is added row')
+
+        self.data.append(added_row)
         self.selectRow(row)
 
     def getTableCell(self, i, j=None):
@@ -300,12 +311,28 @@ class TableView(QTableWidget):
 
         return result
 
+    def returnOriginDataIndex(self, sorted_index):
+        current_row = self.getTableCell(sorted_index).copy()
+        for i in range(self.xminIndex, self.degreeIndex+1):
+            current_row[i] = int(current_row[i])
+
+        origin_index = self.data.index(current_row)
+
+        return origin_index
+
+
     def cell_click(self):
-        self.clicked_row = (self.selectedIndexes())[0].row()
+        self.clicked_row_index = (self.selectedIndexes())[0].row()
+        self.current_row = self.getTableCell(self.clicked_row_index)
+
+        origin_index = self.returnOriginDataIndex(self.clicked_row_index)
+
+        print(origin_index, 'is original index')
+
         # self.clicked_col = index.column()
-        print(self.clicked_row, 'clicked')  # Test
-        print(self.getTableCell(self.clicked_row))  # Test
-        self.on_selected(self.clicked_row)
+        print(self.clicked_row_index, 'clicked')  # Test
+        print(self.getTableCell(self.clicked_row_index))  # Test
+        self.on_selected(origin_index)
 
     def double_click(self):
         index = (self.selectionModel().currentIndex())
@@ -316,7 +343,7 @@ class TableView(QTableWidget):
             self.setCellWidget(self.double_row, self.double_col, self.type)
             self.setItem(self.double_row, self.double_col, QTableWidgetItem(self.type.currentText()))
         elif self.double_col == self.classIndex:
-            type = self.getTableCell(i=self.double_row, j=self.classIndex)
+            type = self.getTableCell(i=self.double_row, j=self.typeIndex)
             self.editText(text=type)
 
     def makeTextComboBox(self):
@@ -337,7 +364,6 @@ class TableView(QTableWidget):
                 self.instrument.addItem(line[i + 1:j])
 
     def editText(self, text):
-        print(text)
         if text == ['equipment_symbol']:
             self.setCellWidget(self.double_row, self.double_col, self.equipment)
             self.equipmentType()
@@ -384,7 +410,8 @@ class TableView(QTableWidget):
 
     def edit_cell(self):
         if self.IsInitialized:
-            if self.selectedIndexes():
+            if self.selectedIndexes() and self.current_row is not None:
+                origin_row = self.current_row.copy()
                 edited_row_index = self.selectedIndexes()[0].row()
                 edited_row = self.getTableCell(edited_row_index)
 
@@ -397,13 +424,33 @@ class TableView(QTableWidget):
                 print(edited_row_index, 'changed')  # Test
                 if self.getTableCell(i=edited_row_index, j=self.typeIndex) == ['']:
                     self.setItem(edited_row_index, self.typeIndex, QTableWidgetItem('text'))
-                self.on_data_changed_from_view(edited_row_index, edited_row)  # row 단위로 업데이트
+
+                for i in range(self.xminIndex, self.degreeIndex + 1):
+                    origin_row[i] = int(origin_row[i])
+
+                origin_index = self.data.index(origin_row)
+
+                print(origin_index, 'is origin_index')
+                print(edited_row_index,' is edited_row_index')
+
+                self.on_data_changed_from_view(origin_index, edited_row)  # row 단위로 업데이트
+
+                self.current_row = edited_row.copy()
+
+                for i in range(self.xminIndex, self.degreeIndex + 1):
+                    edited_row[i] = int(edited_row[i])
+
+                self.data[origin_index] = edited_row
 
     def delete_cell(self):
         deleted_index = self.selectedIndexes()[0].row()
-        self.removeRow(deleted_index)
+
+        origin_index = self.returnOriginDataIndex(deleted_index)
+
+        self.removeRow(deleted_index) # Table삭제
         # del self.checkBoxList[deleted_index]
-        self.on_deleted(deleted_index)
+        self.on_deleted(origin_index) # Model에서 삭제
+        del self.data[origin_index]
 
     def saveXML(self, filename):
         makeXML(self.get_data(), filename)
@@ -576,7 +623,7 @@ class BoxModel:
 
         if ymax - ymin > xmax - xmin: orientation = 90
 
-        new_row = ['', string, xmin, ymin, xmax, ymax, orientation, True]
+        new_row = ['', string, xmin, ymin, xmax, ymax, orientation]
         # self.data = np.append(self.data, new_row, axis=1) # np제거
         self.data.append(new_row)
 
