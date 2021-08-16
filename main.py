@@ -1,5 +1,5 @@
 import sys
-from MainWindow import *
+from Window.MainWindow import *
 
 
 if __name__ == '__main__':

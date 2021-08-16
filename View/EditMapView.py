@@ -1,10 +1,8 @@
-import sys
-
-from MainWindow import *
+from Window.MainWindow import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from PyQt5.QtGui import QPainter, QPen, QColor, QStandardItemModel, QBrush
+from PyQt5.QtGui import QPainter, QColor, QBrush
 
 class graphicsView(QGraphicsView):
     def __init__(self, imgPath):
@@ -168,7 +166,7 @@ class GraphicsScene(QGraphicsScene):
         painter.setOpacity(0.999)
         painter.drawPixmap(0, 0, input)
         painter.end()
-        self.save_dir = './temp'
+        self.save_dir = '../temp'
         if not os.path.isdir(self.save_dir):
             os.mkdir(self.save_dir)
         self.full_save_path = self.save_dir + '/convertPNG.png'

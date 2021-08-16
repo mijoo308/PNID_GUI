@@ -1,15 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import sys
-from PyQt5.QtWidgets import *
-
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import QRect
 
-from MappedWindow import *
-from ImgView import *
-from ImgListView import *
-import editMap
+from Window.MappedWindow import *
+from View.ImgListView import *
+from View import EditMapView
 import pathlib
 import shutil
 
@@ -64,9 +59,9 @@ class MainWindow(QMainWindow):
         self.saveAction.triggered.connect(self.save_file)
         self.dotAction = QAction(QIcon('./icon_img/dotted.png'), ' ', self)
         self.icon1ImgAction = QAction(QIcon('./icon_img/icon1.png'), ' ', self)
-        self.preprocessImgAction = QAction(QIcon('./Icon_img/pre.png'), '원본도면 전처리')
+        self.preprocessImgAction = QAction(QIcon('./icon_img/pre.png'), '원본도면 전처리')
         self.preprocessImgAction.triggered.connect(self.preprocessImg)
-        self.recogImgAction = QAction(QIcon('./Icon_img/cognition.png'), '도면 객체 인식')
+        self.recogImgAction = QAction(QIcon('./icon_img/cognition.png'), '도면 객체 인식')
         self.recogImgAction.triggered.connect(self.recogImg)
 
     def save_file(self):
@@ -103,11 +98,11 @@ class MainWindow(QMainWindow):
 
     def enableToolBtn(self):
         self.dotAction = QAction(QIcon('./icon_img/dotted.png'), ' ', self)
-        self.outlineImgAction = QAction(QIcon('./Icon_img/outline.png'), '외곽선 영역 선택', self)
+        self.outlineImgAction = QAction(QIcon('./icon_img/outline.png'), '외곽선 영역 선택', self)
         self.outlineImgAction.triggered.connect(self.outlineMessageBox)
-        self.exceptFieldImgAction = QAction(QIcon('./Icon_img/exceptField.png'), '표제영역 선택', self)
+        self.exceptFieldImgAction = QAction(QIcon('./icon_img/exceptField.png'), '표제영역 선택', self)
         self.exceptFieldImgAction.triggered.connect(self.exceptFieldMessageBox)
-        self.mapFieldImAction = QAction(QIcon('./Icon_img/mapField.png'), '도면영역 선택', self)
+        self.mapFieldImAction = QAction(QIcon('./icon_img/mapField.png'), '도면영역 선택', self)
         self.mapFieldImAction.triggered.connect(self.mapFieldMessageBox)
 
         self.file_toolbar.addAction(self.dotAction)
@@ -241,7 +236,7 @@ class MainWindow(QMainWindow):
 
     def createImgViewer(self):
         #self.ScrollableImgArea = ImgView()
-        self.imgArea = editMap.graphicsView(self.imgFilePath[0])
+        self.imgArea = EditMapView.graphicsView(self.imgFilePath[0])
         self.setCentralWidget(self.imgArea)
 
     def createImgListDock(self):
