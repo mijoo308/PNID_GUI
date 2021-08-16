@@ -270,7 +270,7 @@ class TableView(QTableWidget):
         if idx == self.typeIndex:
             self.setSortingEnabled(True)
             self.sortItems(self.typeIndex, Qt.AscendingOrder)
-            # self.setSortingEnabled(False)
+            self.setSortingEnabled(False)
 
             # self.sortItems(1, Qt.DescendingOrder)
 
