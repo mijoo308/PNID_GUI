@@ -74,6 +74,7 @@ class MainWindow(QMainWindow):
 
     def recogImg(self):
         img_dir = './data'
+        result_dir = './result'
         for file in os.listdir(img_dir):
             if os.path.isdir(os.path.join(img_dir, file)):
                 shutil.rmtree(os.path.join(img_dir, file), ignore_errors=True)
@@ -81,12 +82,12 @@ class MainWindow(QMainWindow):
                 os.remove(str(os.path.join(img_dir, file)))
 
         recog_img_name = os.path.basename(self.imgFilePath[0])
-        recog_img_path = os.path.join('./data', recog_img_name)
+        recog_img_path = os.path.join(img_dir, recog_img_name)
         self.imgArea.scene.mapImg.save(recog_img_path)
         xml_name = str(recog_img_name.split('.')[0])
 
-        exec(open(r'C:\Users\master\Desktop\PNID_GUI\testSrc\run_easyTess.py', encoding="utf-8").read(), globals())
-        xml_dir = max(pathlib.Path('./result').glob('*/'), key=os.path.getmtime)
+        exec(open('./recognition_src/main.py', encoding="utf-8").read(), globals())
+        xml_dir = max(pathlib.Path(result_dir).glob('*/'), key=os.path.getmtime)
         xml_result_path = os.path.join(xml_dir, xml_name + '.xml')
 
         self.callMappedArea(img_path=recog_img_path, xml_path=xml_result_path)

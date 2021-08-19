@@ -5,10 +5,11 @@ import numpy as np
 import xml.etree.ElementTree as ET
 
 
+
 # Result xml 형식 기준
 def makeXML(Boxes, filename):
     root = ET.Element('annotation')
-    ET.SubElement(root, 'filename').text = filename
+    ET.SubElement(root, 'filename').text = os.path.basename(filename)
 
     # string, orientation, xmin, ymin, xmax, ymax
     for box in Boxes: #per Box
