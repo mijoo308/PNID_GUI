@@ -166,6 +166,8 @@ class TableView(QTableWidget):
         self.double_row = index.row()
         self.double_col = index.column()
 
+        self.current_row = self.getTableCell(self.double_row)
+
         if self.double_col == self.typeIndex:
             self.setCellWidget(self.double_row, self.double_col, self.type)
             self.setItem(self.double_row, self.double_col, QTableWidgetItem(self.type.currentText()))
