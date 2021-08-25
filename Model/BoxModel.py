@@ -3,7 +3,7 @@ class BoxModel:
         super().__init__()
         self.data = parsed_data
         self.selectedDataIndex = None
-        # string, orientation, xmin, ymin, xmax, ymax, visible
+        # string, orientation, xmin, ymin, xmax, ymax
 
     #     self.row = self.data.shape[0]
     #     self.col = self.data.shape[1]
@@ -61,7 +61,6 @@ class BoxModel:
         if ymax - ymin > xmax - xmin: orientation = 90
 
         new_row = ['', string, xmin, ymin, xmax, ymax, orientation]
-        # self.data = np.append(self.data, new_row, axis=1) # np제거
         self.data.append(new_row)
 
         self.notify_added_to_table()

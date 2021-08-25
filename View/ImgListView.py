@@ -45,5 +45,4 @@ class ImgListView(QScrollArea):
         self.box_layout.addWidget(img_label)
         self.box_layout.addWidget(img_name_label)
 
-        # TODO: element 마지막에 stretch 처리 필요
         # self.box_layout.addStretch()

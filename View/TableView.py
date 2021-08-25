@@ -69,7 +69,7 @@ class TableView(QTableWidget):
             # self.setCellWidget(i, 0, self.checkBoxList[i])
             # self.checkBoxList[i].setChecked(True)  # checked가 default
 
-            # 순서: type, string, xmin, ymin, xmax, ymax, degree, visible
+            # 순서: type, string, xmin, ymin, xmax, ymax, degree
             self.setItem(i, self.typeIndex, QTableWidgetItem(self.data[i][0]))
             self.setItem(i, self.classIndex, QTableWidgetItem(str(self.data[i][1])))
             self.setItem(i, self.xminIndex, QTableWidgetItem(str(self.data[i][2])))
@@ -122,7 +122,7 @@ class TableView(QTableWidget):
         for i in range(self.xminIndex, self.degreeIndex + 1):
             added_row[i] = int(added_row[i])
 
-        print(added_row, 'is added row')
+        # print(added_row, 'is added row')
 
         self.data.append(added_row)
         self.selectRow(row)
@@ -154,11 +154,11 @@ class TableView(QTableWidget):
 
         origin_index = self.returnOriginDataIndex(self.clicked_row_index)
 
-        print(origin_index, 'is original index')
+        # print(origin_index, 'is original index')
 
         # self.clicked_col = index.column()
-        print(self.clicked_row_index, 'clicked')  # Test
-        print(self.getTableCell(self.clicked_row_index))  # Test
+        # print(self.clicked_row_index, 'clicked')  # Test
+        # print(self.getTableCell(self.clicked_row_index))  # Test
         self.on_selected(origin_index)
 
     def double_click(self):
@@ -242,13 +242,7 @@ class TableView(QTableWidget):
                 edited_row_index = self.selectedIndexes()[0].row()
                 edited_row = self.getTableCell(edited_row_index)
 
-                # if self.checkBoxList[edited_row_index].isChecked():
-                #     edited_row.append(True)  # TODO: bool 타입으로 저장이 안되는 것 수정 필요
-                # else:
-                #     edited_row.append(False)
-
-                # edited_row = np.array(edited_row)  # list type -> np  np제거
-                print(edited_row_index, 'changed')  # Test
+                # print(edited_row_index, 'changed')  # Test
                 if self.getTableCell(i=edited_row_index, j=self.typeIndex) == ['']:
                     self.setItem(edited_row_index, self.typeIndex, QTableWidgetItem('text'))
 
@@ -257,8 +251,8 @@ class TableView(QTableWidget):
 
                 origin_index = self.data.index(origin_row)
 
-                print(origin_index, 'is origin_index')
-                print(edited_row_index,' is edited_row_index')
+                # print(origin_index, 'is origin_index')
+                # print(edited_row_index,' is edited_row_index')
 
                 self.on_data_changed_from_view(origin_index, edited_row)  # row 단위로 업데이트
 

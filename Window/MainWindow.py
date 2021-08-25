@@ -216,7 +216,7 @@ class MainWindow(QMainWindow):
         # self.ScrollableImgArea.uploadImg(resize_ratio=0.2, filePath=self.imgFilePath[0])
         self.createImgViewer()
         self.dialog.close()
-        self.callMappedArea(img_path=self.imgFilePath[0], xml_path=self.xmlFilePath[0])  # 테스트 해보려구 넣은 명려문 나중에 다른 곳으로 옮겨야 함
+        self.callMappedArea(img_path=self.imgFilePath[0], xml_path=self.xmlFilePath[0])
 
     def imgOkBtnClick(self):
         self.createImgViewer()
@@ -241,11 +241,11 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.imgArea)
 
     def createImgListDock(self):
-        self.dockingWidget = QDockWidget("도면 목록")  # 타이틀 설정
+        self.dockingWidget = QDockWidget("도면 목록")
         self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
         self.dockingWidget.setMinimumSize(int(self.frameGeometry().width() * 0.2), self.frameGeometry().height())
         self.dockingWidget.setWidget(ImgListView())  # imgListView()랑 연결
-        self.dockingWidget.setFloating(False)  # ? False했는데도 움직여짐,,
+        self.dockingWidget.setFloating(False)
 
         self.addDockWidget(Qt.LeftDockWidgetArea, self.dockingWidget)
 

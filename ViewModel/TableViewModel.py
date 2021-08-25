@@ -22,8 +22,7 @@ class TableViewModel:
     def getChagedDataFromView(self, row, value):
         self.updateBoxData(row, value)
 
-        print(row, value, "is changed")  # test
-        # box 그리는 것도 추가해야함
+        # print(row, value, "is changed")
 
     def getBoxData(self):
         return self.model.getBoxData()

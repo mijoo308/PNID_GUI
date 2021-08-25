@@ -18,7 +18,6 @@ class LayerView(QGraphicsView):
 
         # self.setDragMode(QGraphicsView.ScrollHandDrag)
         self._mousePressed = False
-        # self._isPanning = False #TODO: drag로 움직일 수 있도록 수정필요
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
@@ -47,7 +46,7 @@ class LayerView(QGraphicsView):
     def setInitData(self):
         self.data = self.get_data()
         box_num = len(self.data)
-        for box_index in range(box_num): # rect 객체 list 만들기
+        for box_index in range(box_num):
             box = BoundingBox(box_index)
             if self.data[box_index][0] == 'text':
                 box.type = 0
@@ -60,7 +59,7 @@ class LayerView(QGraphicsView):
             box.setFlag(QGraphicsItem.ItemIsMovable, False)
             # box.setFlag(QGraphicsItem.ItemIsFocusable, True)
             self.scene.addItem(box)
-            xmin = int(self.data[box_index][2]) #TODO: table에 보낼 때 int->string
+            xmin = int(self.data[box_index][2])
             ymin = int(self.data[box_index][3])
             width = int(self.data[box_index][4]) - xmin
             height = int(self.data[box_index][5]) - ymin
@@ -144,7 +143,7 @@ class LayerView(QGraphicsView):
         self.bndboxList[i].setFlag(QGraphicsItem.ItemIsMovable, False)
         self.bndboxList[i].setFlag(QGraphicsItem.ItemIsFocusable, True)
         self.scene.addItem(self.bndboxList[i])
-        xmin = int(new_row[2])  # TODO: table에 보낼 때 int->string
+        xmin = int(new_row[2])
         ymin = int(new_row[3])
         width = int(new_row[4]) - xmin
         height = int(new_row[5]) - ymin
@@ -197,7 +196,7 @@ class GraphicsScene(QGraphicsScene):
     #     self._current_rect_item.setRect(r)
 
     def mousePressEvent(self, event):
-        print(type(self.itemAt(event.scenePos(), QTransform())))
+        # print(type(self.itemAt(event.scenePos(), QTransform())))
         self.isExistingBox = isinstance(self.itemAt(event.scenePos(), QTransform()), QGraphicsRectItem)
 
         if self.isExistingBox: # 존재하는 박스 클릭 시
@@ -268,8 +267,7 @@ class LayerViewModel:
     def getChagedDataFromView(self, row, value):
         self.updateBoxData(row, value)
 
-        print(row, value, "is changed")  # test
-        # box 그리는 것도 추가해야함
+        # print(row, value, "is changed")
 
     def getBoxData(self):
         return self.model.getBoxData()
